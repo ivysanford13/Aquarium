@@ -1,0 +1,1857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aquarium Log</title>
+<style>
+:root{ color-scheme:light; }
+*{ box-sizing:border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --paper:#edf3f5;
+  --surface:#ffffff;
+  --surface-2:#e2edf1;
+  --ink:#122a33;
+  --ink-soft:#3f5c67;
+  --ink-faint:#7996a1;
+  --line:#c7dce2;
+  --accent:#1878a6;
+  --accent-ink:#ffffff;
+  --teal:#0f7f8f;
+  --teal-soft:#d8eef1;
+  --good:#1f8a72;
+  --good-soft:#dcf2ec;
+  --warn:#b3791d;
+  --warn-soft:#f7ecd6;
+  --critical:#c1453c;
+  --critical-soft:#f8e0dd;
+  --indigo:#5c6bc0;
+  --shadow: 0 1px 2px rgba(18,42,51,.06), 0 6px 20px -8px rgba(18,42,51,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0a1824;
+    --surface:#13293a;
+    --surface-2:#0e2130;
+    --ink:#eaf4f8;
+    --ink-soft:#a9c6d3;
+    --ink-faint:#6d90a1;
+    --line:#204154;
+    --accent:#5ec2f0;
+    --accent-ink:#04141c;
+    --teal:#3ecfd8;
+    --teal-soft:#103a40;
+    --good:#4ddba3;
+    --good-soft:#0f3327;
+    --warn:#f0b429;
+    --warn-soft:#33290f;
+    --critical:#f0645c;
+    --critical-soft:#331a18;
+    --indigo:#9b9df5;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -10px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0a1824;
+  --surface:#13293a;
+  --surface-2:#0e2130;
+  --ink:#eaf4f8;
+  --ink-soft:#a9c6d3;
+  --ink-faint:#6d90a1;
+  --line:#204154;
+  --accent:#5ec2f0;
+  --accent-ink:#04141c;
+  --teal:#3ecfd8;
+  --teal-soft:#103a40;
+  --good:#4ddba3;
+  --good-soft:#0f3327;
+  --warn:#f0b429;
+  --warn-soft:#33290f;
+  --critical:#f0645c;
+  --critical-soft:#331a18;
+  --indigo:#9b9df5;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -10px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Work Sans',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{
+  font-family:'Fraunces',Georgia,serif;
+  text-wrap:balance;
+  letter-spacing:-0.01em;
+}
+.mono{ font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums; }
+a{color:inherit;}
+button{font-family:inherit;}
+
+/* ---------- header ---------- */
+header{
+  position:sticky; top:0; z-index:20;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.header-inner{
+  max-width:1180px; margin:0 auto; padding:16px 24px;
+  display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+}
+.wordmark{
+  display:flex; align-items:baseline; gap:9px; margin-right:auto;
+}
+.wordmark svg{ flex:none; }
+.wordmark .name{ font-size:1.28rem; font-weight:600; }
+.wordmark .tagline{ font-size:.78rem; color:var(--ink-faint); font-family:'Work Sans'; }
+
+.tank-tabs{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.tank-tab{
+  border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+  padding:7px 14px; border-radius:999px; font-size:.86rem; cursor:pointer;
+  white-space:nowrap; transition:border-color .15s, color .15s, background .15s;
+}
+.tank-tab:hover{ border-color:var(--teal); color:var(--ink); }
+.tank-tab.active{ background:var(--teal); border-color:var(--teal); color:var(--accent-ink); font-weight:500; }
+.tank-tab .n{ opacity:.7; font-size:.8em; margin-left:2px; }
+.qt-badge{
+  display:inline-block; font-size:.62rem; font-weight:700; letter-spacing:.04em;
+  padding:1px 5px; border-radius:4px; margin-left:6px; vertical-align:1px;
+  background:var(--warn-soft); color:var(--warn);
+}
+.tank-tab.active .qt-badge{ background:rgba(255,255,255,.25); color:var(--accent-ink); }
+.tank-tab-wrap{ position:relative; display:inline-flex; align-items:center; }
+.tank-tab-del{
+  border:none; background:var(--surface); color:var(--ink-faint); cursor:pointer;
+  width:16px; height:16px; border-radius:50%; font-size:.62rem; line-height:1;
+  display:flex; align-items:center; justify-content:center; margin-left:-14px; margin-top:-14px;
+  box-shadow:0 0 0 1px var(--line); opacity:0; transition:opacity .12s;
+}
+.tank-tab-wrap:hover .tank-tab-del{ opacity:1; }
+.tank-tab-del:hover{ background:var(--critical); color:#fff; box-shadow:0 0 0 1px var(--critical); }
+.link-btn{
+  border:none; background:none; padding:0; font:inherit; color:var(--warn); text-decoration:underline;
+  cursor:pointer;
+}
+
+.btn{
+  border:1px solid var(--line); background:var(--surface); color:var(--ink);
+  padding:8px 14px; border-radius:9px; font-size:.86rem; cursor:pointer;
+  display:inline-flex; align-items:center; gap:6px; transition:border-color .15s, transform .1s;
+}
+.btn:hover{ border-color:var(--teal); }
+.btn:active{ transform:translateY(1px); }
+.btn-primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:500; }
+.btn-primary:hover{ border-color:var(--accent); filter:brightness(1.06); }
+.btn-ghost{ border-color:transparent; background:transparent; padding:6px 8px; color:var(--ink-faint); }
+.btn-ghost:hover{ color:var(--critical); }
+.btn-sm{ padding:5px 10px; font-size:.78rem; border-radius:7px; }
+.btn:focus-visible, .tank-tab:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+  outline:2px solid var(--teal); outline-offset:2px;
+}
+
+/* ---------- layout ---------- */
+main{ max-width:1180px; margin:0 auto; padding:28px 24px 80px; }
+.empty{
+  max-width:520px; margin:60px auto; text-align:center; padding:40px 32px;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow);
+}
+.empty h2{ margin:.2em 0 .3em; font-size:1.5rem; }
+.empty p{ color:var(--ink-soft); line-height:1.55; margin-bottom:22px; }
+
+.example-banner{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--warn);
+  color:var(--ink); padding:10px 16px; border-radius:10px; font-size:.86rem; margin-bottom:20px;
+}
+.example-banner strong{ color:var(--warn); }
+
+.summary-strip{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1px;
+  background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden;
+  margin-bottom:24px; box-shadow:var(--shadow);
+}
+.stat{ background:var(--surface); padding:16px 18px; }
+.stat .label{ font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-faint); margin-bottom:6px; }
+.stat .value{ font-size:1.5rem; font-weight:500; font-family:'Fraunces',serif; }
+.stat .value.unit{ font-size:1rem; color:var(--ink-soft); font-family:'Work Sans'; font-weight:400; }
+
+.grid{
+  display:grid; grid-template-columns:1.35fr 1fr; gap:20px; align-items:start;
+}
+@media (max-width:860px){ .grid{ grid-template-columns:1fr; } }
+.col{ display:flex; flex-direction:column; gap:20px; }
+
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:20px 22px; box-shadow:var(--shadow);
+}
+.card-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.card-head h2{ font-size:1.15rem; margin:0; font-weight:600; }
+.card-head .sub{ font-size:.78rem; color:var(--ink-faint); }
+
+/* forms */
+form.inline-form{
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; padding-top:14px; border-top:1px dashed var(--line);
+}
+form.inline-form.hidden{ display:none; }
+.field{ display:flex; flex-direction:column; gap:3px; flex:1 1 90px; min-width:82px; }
+.field.grow{ flex:2 1 160px; }
+.field label{ font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); }
+input,select,textarea{
+  border:1px solid var(--line); background:var(--surface-2); color:var(--ink);
+  border-radius:7px; padding:7px 9px; font-size:.86rem; font-family:'Work Sans';
+  width:100%;
+}
+textarea{ resize:vertical; min-height:36px; font-family:'Work Sans'; }
+.field input.mono{ font-family:'IBM Plex Mono'; }
+.form-actions{ display:flex; align-items:flex-end; gap:8px; }
+
+/* chart */
+.chart-wrap{ overflow-x:auto; }
+svg.chart{ display:block; width:100%; height:220px; }
+.chart-legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:.76rem; color:var(--ink-soft); }
+.chart-legend span{ display:inline-flex; align-items:center; gap:5px; }
+.chart-legend i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+/* tables */
+table{ width:100%; border-collapse:collapse; font-size:.83rem; }
+th{ text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); font-weight:500; padding:6px 8px; border-bottom:1px solid var(--line); }
+td{ padding:7px 8px; border-bottom:1px solid var(--line); color:var(--ink-soft); }
+tr:last-child td{ border-bottom:none; }
+td.mono, th.num{ text-align:right; }
+.table-scroll{ overflow-x:auto; margin-top:12px; }
+.row-actions{ text-align:right !important; }
+
+/* lists */
+.task-list, .stock-list, .feed-list{ display:flex; flex-direction:column; gap:8px; }
+.task-row{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line);
+  border-radius:10px; background:var(--surface-2);
+}
+.task-row .info{ flex:1; min-width:0; }
+.task-row .name{ font-weight:500; font-size:.9rem; }
+.task-row .meta{ font-size:.76rem; color:var(--ink-faint); }
+.pill{
+  font-size:.7rem; padding:3px 9px; border-radius:999px; font-weight:500; white-space:nowrap;
+}
+.pill-good{ background:var(--good-soft); color:var(--good); }
+.pill-warn{ background:var(--warn-soft); color:var(--warn); }
+.pill-critical{ background:var(--critical-soft); color:var(--critical); }
+
+.stock-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+.stock-card{ border:1px solid var(--line); border-radius:10px; padding:11px 12px; background:var(--surface-2); overflow:hidden; }
+.stock-card .thumb{
+  width:100%; height:84px; object-fit:cover; border-radius:7px; margin:-11px -12px 8px; display:block;
+  width:calc(100% + 24px);
+}
+.stock-card .cat{ font-size:.66rem; text-transform:uppercase; letter-spacing:.06em; color:var(--teal); font-weight:600; }
+.stock-card .sp{ font-family:'Fraunces',serif; font-size:1.02rem; margin:2px 0 3px; }
+.stock-card .meta{ font-size:.74rem; color:var(--ink-faint); }
+.qty-stepper{ display:flex; align-items:center; gap:8px; margin:6px 0; }
+.qty-stepper .btn-ghost{ border:1px solid var(--line); border-radius:6px; padding:1px 8px; line-height:1.4; }
+.qty-stepper .btn-ghost:disabled{ opacity:.4; cursor:not-allowed; }
+.qty-val{ font-size:.92rem; min-width:1.4em; text-align:center; }
+.stock-actions{ display:flex; gap:6px; margin-top:6px; }
+.stock-edit .field{ margin-bottom:8px; }
+
+.feed-row, .expense-row{ display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:.85rem; }
+.feed-row:last-child, .expense-row:last-child{ border-bottom:none; }
+.feed-row .date, .expense-row .date{ color:var(--ink-faint); font-family:'IBM Plex Mono'; font-size:.78rem; flex:none; }
+.feed-row .what, .expense-row .what{ flex:1; }
+.expense-row .amt{ font-family:'IBM Plex Mono'; font-variant-numeric:tabular-nums; flex:none; }
+.expense-cat{
+  font-size:.64rem; text-transform:uppercase; letter-spacing:.05em; color:var(--teal);
+  background:var(--teal-soft); padding:1px 6px; border-radius:5px; margin-right:6px;
+}
+.expense-edit-row{
+  display:flex; flex-wrap:wrap; gap:6px; padding:8px 0; border-bottom:1px solid var(--line); align-items:center;
+}
+.expense-edit-row input[type="date"]{ flex:1 1 120px; }
+.expense-edit-row select{ flex:1 1 110px; }
+.expense-edit-row input[type="number"]{ flex:0 1 90px; }
+.expense-edit-row input[type="text"]{ flex:2 1 140px; }
+
+.muted-empty{ color:var(--ink-faint); font-size:.85rem; padding:10px 2px; }
+
+footer{ text-align:center; color:var(--ink-faint); font-size:.76rem; padding:30px 24px 50px; }
+
+/* ---------- modal ---------- */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(10,20,18,.44); z-index:100;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.hidden{ display:none; }
+
+/* ---------- auth screen ---------- */
+.auth-screen{
+  position:fixed; inset:0; background:var(--paper); z-index:200;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.auth-screen.hidden{ display:none; }
+.auth-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  box-shadow:var(--shadow); padding:28px 26px; width:100%; max-width:360px; text-align:center;
+}
+.auth-card h2{ margin:4px 0 4px; }
+.auth-card .modal-field{ text-align:left; }
+.auth-error{
+  background:var(--critical-soft); color:var(--critical); border-radius:8px; padding:8px 10px;
+  font-size:.82rem; margin-bottom:12px; text-align:left;
+}
+.auth-error.hidden{ display:none; }
+.auth-switch{ margin-top:16px; font-size:.84rem; color:var(--ink-faint); }
+.account-email{ font-size:.78rem; color:var(--ink-faint); white-space:nowrap; }
+body.auth-pending header, body.auth-pending main{ visibility:hidden; }
+.modal-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  box-shadow:var(--shadow); padding:24px 26px; width:100%; max-width:420px;
+  max-height:90vh; overflow-y:auto;
+}
+.modal-card h2{ margin:0 0 4px; font-size:1.25rem; }
+.modal-card .modal-sub{ font-size:.82rem; color:var(--ink-faint); margin-bottom:18px; }
+.modal-field{ display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+.modal-field label{ font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); }
+.modal-check{ display:flex; align-items:center; gap:8px; margin:6px 0 16px; font-size:.86rem; }
+.modal-check input{ width:auto; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:6px; }
+
+/* unit toggle */
+.unit-toggle{
+  display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; font-size:.72rem;
+}
+.unit-toggle button{
+  border:none; background:var(--surface-2); color:var(--ink-soft); padding:4px 10px; cursor:pointer;
+}
+.unit-toggle button.active{ background:var(--teal); color:var(--accent-ink); font-weight:600; }
+
+/* advice */
+.advice-panel{
+  margin-top:12px; padding:14px 16px; border-radius:10px; background:var(--teal-soft);
+  border:1px solid color-mix(in srgb, var(--teal) 35%, transparent); font-size:.86rem; line-height:1.55;
+}
+.advice-panel .advice-head{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:6px; }
+.advice-panel .advice-head strong{ color:var(--teal); font-family:'Fraunces',serif; font-size:.95rem; }
+.advice-panel .advice-close{ cursor:pointer; color:var(--ink-faint); background:none; border:none; font-size:.85rem; }
+.advice-panel .advice-close:hover{ color:var(--critical); }
+.advice-loading{ color:var(--ink-faint); font-style:italic; }
+.advice-item{ padding:8px 0; border-top:1px solid color-mix(in srgb, var(--teal) 20%, transparent); }
+.advice-item:first-of-type{ border-top:none; padding-top:0; }
+.advice-source{
+  display:inline-block; margin-top:4px; font-size:.74rem; color:var(--teal); text-decoration:none; opacity:.85;
+}
+.advice-source:hover{ text-decoration:underline; }
+
+/* converter */
+.converter-row{ display:flex; align-items:flex-end; gap:10px; margin-bottom:12px; }
+.converter-row .modal-field{ flex:1; margin-bottom:0; }
+.converter-swap{
+  border:1px solid var(--line); background:var(--surface-2); border-radius:8px; width:34px; height:34px;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; flex:none;
+}
+.converter-swap:hover{ border-color:var(--teal); }
+.density-presets{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.density-presets button{
+  border:1px solid var(--line); background:var(--surface-2); color:var(--ink-soft); border-radius:7px;
+  padding:5px 10px; font-size:.76rem; cursor:pointer;
+}
+.density-presets button.active{ background:var(--teal-soft); border-color:var(--teal); color:var(--teal); font-weight:600; }
+.converter-result{
+  background:var(--teal-soft); border:1px solid color-mix(in srgb, var(--teal) 35%, transparent);
+  border-radius:10px; padding:12px 14px; margin-bottom:6px;
+}
+.converter-result .big{ font-family:'Fraunces',serif; font-size:1.4rem; color:var(--teal); }
+.converter-note{ font-size:.76rem; color:var(--ink-faint); line-height:1.5; }
+
+/* chart scrubber */
+.scrub-hint-static{ font-size:.72rem; color:var(--ink-faint); margin-top:8px; font-style:italic; }
+.scrub-panel{
+  margin-top:8px; padding:12px 14px; border-radius:10px; background:var(--surface-2);
+  border:1px solid var(--line); font-size:.84rem;
+}
+.scrub-panel.hidden{ display:none; }
+.scrub-date{ font-family:'Fraunces',serif; font-size:1rem; margin-bottom:6px; }
+.scrub-row{ display:flex; align-items:center; gap:6px; padding:2px 0; flex-wrap:wrap; }
+.scrub-row i{ width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
+.scrub-row b{ margin-left:2px; }
+.delta{ font-size:.78rem; }
+.delta-up{ color:var(--critical); }
+.delta-down{ color:var(--good); }
+.delta-flat{ color:var(--ink-faint); }
+.scrub-hint{ font-size:.76rem; color:var(--ink-faint); margin-top:4px; }
+
+/* foods manager */
+.foods-manager{ margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed var(--line); }
+.foods-manager-label{ font-size:.64rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); margin-bottom:6px; }
+.food-chip-list{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px; }
+.food-chip{
+  display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line); background:var(--surface-2);
+  border-radius:999px; padding:3px 5px 3px 8px; font-size:.76rem;
+}
+.food-chip i{ width:9px; height:9px; border-radius:50%; display:inline-block; flex:none; }
+.food-chip button{ border:none; background:none; color:var(--ink-faint); cursor:pointer; font-size:.78rem; padding:2px 4px; }
+.food-chip button:hover{ color:var(--critical); }
+.food-form{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px; }
+.food-form input[type="text"]{ flex:1 1 160px; }
+.color-swatch-picker{ display:flex; gap:6px; flex-wrap:wrap; }
+.color-swatch{
+  width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0;
+}
+.color-swatch.selected{ border-color:var(--ink); box-shadow:0 0 0 2px var(--surface); }
+
+/* feeding calendar — dense mini-calendar layout */
+.feed-calendar{ max-width:280px; margin:0 auto; }
+.calendar-nav{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; font-size:.8rem; color:var(--ink-soft); }
+.calendar-nav button{ border:none; background:none; cursor:pointer; color:var(--ink-soft); font-size:.9rem; padding:2px 6px; line-height:1; }
+.calendar-nav button:hover{ color:var(--teal); }
+.calendar-nav .month-label{ font-weight:600; font-size:.82rem; }
+.calendar-grid{ display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:34px; gap:2px; }
+.calendar-dow{ text-align:center; font-size:.58rem; text-transform:uppercase; color:var(--ink-faint); padding-bottom:2px; }
+.calendar-cell{
+  width:100%; height:34px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  border-radius:6px; cursor:pointer; border:1px solid transparent; background:var(--surface-2);
+}
+.calendar-cell.pad{ visibility:hidden; cursor:default; }
+.calendar-cell:hover{ border-color:var(--teal); }
+.calendar-cell.today .daynum{ color:var(--accent); font-weight:700; }
+.calendar-cell.selected{ background:var(--teal-soft); border-color:var(--teal); }
+.calendar-cell .daynum{ font-size:.66rem; color:var(--ink-soft); font-family:'IBM Plex Mono'; }
+.feed-dot{ width:8px; height:8px; border-radius:50%; background:var(--line); flex:none; }
+.feed-dot.no-feed{ background:transparent; }
+
+.feed-day-detail{ margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); }
+.feed-day-title{ font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); margin-bottom:6px; }
+.feed-entry-row{ display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--line); font-size:.83rem; }
+.feed-entry-row:last-child{ border-bottom:none; }
+.feed-entry-row i{ width:8px; height:8px; border-radius:50%; flex:none; }
+.feed-entry-row .fname{ font-weight:500; }
+.feed-entry-row .ftarget{ color:var(--ink-faint); font-size:.76rem; }
+.feed-entry-row .fnotes{ color:var(--ink-faint); font-size:.78rem; flex:1; }
+.feed-entry-edit-row{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); }
+.feed-entry-edit-row select, .feed-entry-edit-row input{ flex:1 1 120px; }
+
+.food-check-row{ display:flex; align-items:center; gap:8px; padding:4px 0; }
+.food-check-row i{ width:8px; height:8px; border-radius:50%; flex:none; }
+.food-check-row label{ display:flex; align-items:center; gap:6px; font-size:.83rem; flex:1 1 140px; text-transform:none; letter-spacing:0; color:var(--ink); }
+.food-check-row select{ flex:1 1 150px; font-size:.8rem; }
+
+/* treatments */
+.treatment-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:.85rem; }
+.treatment-row:last-child{ border-bottom:none; }
+.treatment-row .date{ color:var(--ink-faint); font-family:'IBM Plex Mono'; font-size:.78rem; flex:none; }
+.treatment-row .what{ flex:1; }
+.treatment-row .amt{ color:var(--ink-faint); font-size:.78rem; }
+.recent-pill{
+  font-size:.62rem; text-transform:uppercase; letter-spacing:.04em; background:var(--warn-soft); color:var(--warn);
+  padding:1px 6px; border-radius:5px; margin-left:6px;
+}
+.treatment-note{
+  font-size:.78rem; color:var(--ink-faint); background:var(--surface-2); border-radius:8px;
+  padding:8px 10px; margin-bottom:12px; line-height:1.5;
+}
+</style>
+</head>
+<body class="auth-pending">
+
+<header>
+  <div class="header-inner">
+    <div class="wordmark">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <path d="M2 15c3-5 8-8 13-6 3 1.2 4.5 3.6 6.5 3.6.9 0 1.5-.5 2-1.3-.2 2.6-1.5 4.3-3.4 4.3-2 0-3-1.6-5.6-1.6-4 0-9 4-12.5-.4Z" fill="var(--teal)"/>
+        <circle cx="8" cy="13.4" r="1.1" fill="var(--paper)"/>
+      </svg>
+      <span class="name">Aquarium Log</span>
+      <span class="tagline">water tests · upkeep · livestock</span>
+    </div>
+    <div class="tank-tabs" id="tankTabs"></div>
+    <span class="account-email" id="accountEmail" hidden></span>
+    <button class="btn btn-sm" id="signOutBtn" hidden>Sign out</button>
+    <button class="btn btn-sm" id="themeToggle" title="Toggle light / dark">🌙</button>
+    <button class="btn btn-sm" id="converterBtn">⇄ ppm / mg/L</button>
+    <button class="btn btn-sm" id="addTankBtn">+ Tank</button>
+  </div>
+</header>
+
+<div class="auth-screen" id="authScreen">
+  <form class="auth-card" id="authForm">
+    <div class="wordmark" style="justify-content:center; margin-bottom:6px;">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <path d="M2 15c3-5 8-8 13-6 3 1.2 4.5 3.6 6.5 3.6.9 0 1.5-.5 2-1.3-.2 2.6-1.5 4.3-3.4 4.3-2 0-3-1.6-5.6-1.6-4 0-9 4-12.5-.4Z" fill="var(--teal)"/>
+        <circle cx="8" cy="13.4" r="1.1" fill="var(--paper)"/>
+      </svg>
+      <span class="name">Aquarium Log</span>
+    </div>
+    <h2 id="authTitle">Sign in</h2>
+    <div class="modal-sub" id="authSub">Each account's tanks and logs are private to that account.</div>
+    <div class="modal-field"><label>Email</label><input type="email" id="authEmail" autocomplete="username" required></div>
+    <div class="modal-field"><label>Password</label><input type="password" id="authPassword" autocomplete="current-password" required minlength="6"></div>
+    <div class="auth-error hidden" id="authError"></div>
+    <button type="submit" class="btn btn-primary" id="authSubmit" style="width:100%; justify-content:center;">Sign in</button>
+    <div class="auth-switch">
+      <span id="authSwitchText">New here?</span>
+      <button type="button" class="link-btn" id="authSwitchBtn">Create an account</button>
+    </div>
+    <button type="button" class="link-btn" id="authForgotBtn" style="display:block; margin-top:10px;">Forgot password?</button>
+  </form>
+</div>
+
+<main id="main"></main>
+
+<footer>Your data lives in this page's own store — it's there next time you open the link.</footer>
+
+<div class="modal-overlay hidden" id="tankModalOverlay">
+  <form class="modal-card" id="tankModalForm">
+    <h2>New tank</h2>
+    <div class="modal-sub">Add another tank to track separately.</div>
+    <div class="modal-field"><label>Name</label><input type="text" name="name" placeholder="e.g. 20-gallon shrimp tank" required></div>
+    <div class="modal-field"><label>Volume (gallons)</label><input class="mono" type="number" min="0" step="0.5" name="gallons" placeholder="20" required></div>
+    <div class="modal-field"><label>Type</label><input type="text" name="type" placeholder="e.g. Freshwater, planted / Saltwater reef" required></div>
+    <label class="modal-check"><input type="checkbox" name="isQuarantine"> This is a quarantine (QT) tank</label>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-sm" id="tankModalCancel">Cancel</button>
+      <button type="submit" class="btn btn-primary btn-sm">Add tank</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal-overlay hidden" id="deleteTankModalOverlay">
+  <div class="modal-card">
+    <h2>Delete tank?</h2>
+    <div class="modal-sub" id="deleteTankSub">This removes the tank and everything logged under it — water tests, livestock, maintenance, feeding, expenses, and treatments. This can't be undone.</div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-sm" id="deleteTankCancel">Cancel</button>
+      <button type="button" class="btn btn-sm" id="deleteTankConfirm" style="background:var(--critical); border-color:var(--critical); color:#fff;">Delete tank</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="converterModalOverlay">
+  <div class="modal-card">
+    <h2>ppm ⇄ mg/L converter</h2>
+    <div class="modal-sub">Converts using your water's density, so it's exact for saltwater too, not just a relabel.</div>
+
+    <div class="converter-row">
+      <div class="modal-field">
+        <label id="convFromLabel">ppm</label>
+        <input class="mono" type="number" step="any" id="convFromInput" placeholder="0">
+      </div>
+      <button type="button" class="converter-swap" id="convSwap" title="Swap direction">⇄</button>
+      <div class="modal-field">
+        <label id="convToLabel">mg/L</label>
+        <input class="mono" type="number" step="any" id="convToInput" placeholder="0" readonly>
+      </div>
+    </div>
+
+    <label style="font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint);">Water density</label>
+    <div class="density-presets" id="densityPresets">
+      <button type="button" data-sg="1.000" class="active">Freshwater · 1.000</button>
+      <button type="button" data-sg="1.010">Brackish · 1.010</button>
+      <button type="button" data-sg="1.025">Saltwater/reef · 1.025</button>
+      <button type="button" data-sg="custom">Custom</button>
+    </div>
+    <div class="modal-field" id="customSgField" style="display:none;">
+      <label>Specific gravity</label>
+      <input class="mono" type="number" step="0.001" min="0.9" max="1.1" id="customSgInput" value="1.000">
+    </div>
+
+    <div class="converter-result">
+      <span class="big" id="convResultText">0 ppm = 0 mg/L</span>
+    </div>
+    <div class="converter-note">mg/L = ppm × density (kg/L). In freshwater the two units come out essentially equal; saltwater is denser, so the same ppm reads slightly higher in mg/L.</div>
+    <div class="modal-actions"><button type="button" class="btn btn-sm" id="converterClose">Close</button></div>
+  </div>
+</div>
+
+<script type="module">
+/* =========================================================================
+   FIREBASE SETUP — paste your config below (Firebase console → Project
+   settings → General → Your apps → SDK setup and configuration → Config).
+   Also turn on: Authentication → Sign-in method → Email/Password, and
+   Firestore Database (start in production mode; rules below lock each
+   person to their own data).
+   ========================================================================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signOut, sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "PASTE_YOUR_API_KEY",
+  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
+  projectId: "PASTE_YOUR_PROJECT_ID",
+  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
+  messagingSenderId: "PASTE_YOUR_SENDER_ID",
+  appId: "PASTE_YOUR_APP_ID",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Bridge to the plain-script app below (kept separate so the rest of the
+// file can stay ordinary, non-module JS).
+window.__fb = {
+  onAuthChange: (cb) => onAuthStateChanged(auth, cb),
+  signUp: (email, password) => createUserWithEmailAndPassword(auth, email, password),
+  signIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
+  resetPassword: (email) => sendPasswordResetEmail(auth, email),
+  signOutUser: () => signOut(auth),
+  getCollection: async (uidPath, name) => {
+    const snap = await getDocs(collection(db, 'users', uidPath, name));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+  setDoc: (uidPath, name, id, data) => setDoc(doc(db, 'users', uidPath, name, id), data),
+  updateDoc: (uidPath, name, id, patch) => updateDoc(doc(db, 'users', uidPath, name, id), patch),
+  deleteDoc: (uidPath, name, id) => deleteDoc(doc(db, 'users', uidPath, name, id)),
+  getSettings: async (uidPath) => {
+    const snap = await getDoc(doc(db, 'users', uidPath, 'settings', 'app'));
+    return snap.exists() ? snap.data() : null;
+  },
+  setSettings: (uidPath, data) => setDoc(doc(db, 'users', uidPath, 'settings', 'app'), data),
+};
+window.dispatchEvent(new Event('fb-ready'));
+</script>
+
+<script>
+(function(){
+
+/* ---------------- helpers ---------------- */
+const $ = (sel, el=document) => el.querySelector(sel);
+const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+const uid = () => Math.random().toString(36).slice(2,10);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtDate = (iso) => { if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}); };
+const daysBetween = (a,b) => Math.round((new Date(b)-new Date(a))/86400000);
+const esc = (s) => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const CATEGORY_LABEL = { fish:'Fish', invert:'Invert / Snail', coral:'Coral' };
+
+/* ---------------- in-memory state (mirrors the db) ---------------- */
+let state = {
+  tanks: [],        // {id,name,gallons,type,startDate,isExample,isQuarantine}
+  waterTests: [],    // {id,tankId,date,ammonia,nitrite,nitrate,ph,temp,notes}
+  livestock: [],     // {id,tankId,name,species,category,qty,addedDate,notes,photoUrl}
+  maintenance: [],   // {id,tankId,label,intervalDays,lastDone,notes}
+  foods: [],         // {id,tankId,name,color}
+  feeding: [],       // {id,tankId,date,foodId,animalId,notes}
+  expenses: [],      // {id,tankId,date,category,amount,notes}
+  treatments: [],    // {id,tankId,date,product,amount,notes}
+};
+let settings = { paramUnit: 'ppm' }; // 'ppm' or 'mgl' — numerically identical, display-only
+let activeTankId = null;
+let adviceState = {};  // { [testId]: {items} }, in-memory only
+const FOOD_COLORS = ['#3f7cac','#2a9d8f','#e07a5f','#8e7cc3','#588157','#c9a227','#b56576','#457b9d','#6d6875','#219ebc'];
+
+/* ---------------- seed (used only if the store is empty) ---------------- */
+function seedData(){
+  const tankId = 'example-55gal';
+  const t0 = new Date(); t0.setDate(t0.getDate()-42);
+  const mk = (offsetDays, vals) => {
+    const d = new Date(t0); d.setDate(d.getDate()+offsetDays);
+    return { id: uid(), tankId, date: d.toISOString().slice(0,10), ...vals };
+  };
+  return {
+    tanks: [{ id: tankId, name:'55-Gallon Community', gallons:55, type:'Freshwater, planted', startDate:t0.toISOString().slice(0,10), isExample:true, isQuarantine:false }],
+    waterTests: [
+      mk(0, {ammonia:0.25, nitrite:0.25, nitrate:10, ph:7.0, temp:78, notes:'Cycling — added ammonia source'}),
+      mk(10,{ammonia:0.25, nitrite:1.0, nitrate:15, ph:7.0, temp:78, notes:'Nitrite spike, textbook cycle'}),
+      mk(20,{ammonia:0, nitrite:0.25, nitrate:25, ph:6.9, temp:78, notes:''}),
+      mk(28,{ammonia:0, nitrite:0, nitrate:20, ph:6.9, temp:78, notes:'Cycled! First fish in tomorrow'}),
+      mk(35,{ammonia:0, nitrite:0, nitrate:30, ph:6.8, temp:79, notes:''}),
+      mk(42,{ammonia:0, nitrite:0, nitrate:15, ph:6.9, temp:78, notes:'After 25% water change'}),
+    ],
+    livestock: [
+      { id:'ex-marbles', tankId, name:'Marbles', species:'Bristlenose pleco', category:'fish', qty:1, addedDate: mk(30,{}).date, notes:'Cleans the glass at night', photoUrl:'' },
+      { id:'ex-neons', tankId, species:'Neon tetra', name:'Neon tetra shoal', category:'fish', qty:8, addedDate: mk(30,{}).date, notes:'', photoUrl:'' },
+      { id:'ex-sword', tankId, name:'Amazon sword', species:'Echinodorus bleheri', category:'plant', qty:2, addedDate: mk(5,{}).date, notes:'Root tabs monthly', photoUrl:'' },
+      { id:'ex-nerites', tankId, name:'Nerite snails', species:'Neritina natalensis', category:'invert', qty:3, addedDate: mk(32,{}).date, notes:'Algae patrol', photoUrl:'' },
+    ],
+    maintenance: [
+      { id: uid(), tankId, label:'25% water change', intervalDays:7, lastDone: mk(42,{}).date, notes:'Gravel-vac the front half' },
+      { id: uid(), tankId, label:'Filter media rinse', intervalDays:30, lastDone: mk(20,{}).date, notes:'Rinse in old tank water only' },
+      { id: uid(), tankId, label:'Trim & dose plants', intervalDays:14, lastDone: mk(35,{}).date, notes:'' },
+    ],
+    foods: [
+      { id:'ex-food-flakes', tankId, name:'Community flakes', color: FOOD_COLORS[0] },
+      { id:'ex-food-wafer', tankId, name:'Algae wafer', color: FOOD_COLORS[1] },
+      { id:'ex-food-brine', tankId, name:'Frozen brine shrimp', color: FOOD_COLORS[4] },
+    ],
+    feeding: [
+      { id: uid(), tankId, date: mk(41,{}).date, foodId:'ex-food-flakes', animalId:'', notes:'small pinch, AM' },
+      { id: uid(), tankId, date: mk(41,{}).date, foodId:'ex-food-wafer', animalId:'ex-marbles', notes:'PM' },
+      { id: uid(), tankId, date: mk(40,{}).date, foodId:'ex-food-brine', animalId:'', notes:'thawed, treat day' },
+      { id: uid(), tankId, date: mk(39,{}).date, foodId:'ex-food-flakes', animalId:'', notes:'' },
+      { id: uid(), tankId, date: mk(39,{}).date, foodId:'ex-food-wafer', animalId:'ex-marbles', notes:'' },
+    ],
+    expenses: [
+      { id: uid(), tankId, date: mk(0,{}).date, category:'equipment', amount:189.99, notes:'55g tank + stand kit' },
+      { id: uid(), tankId, category:'equipment', amount:34.5, date: mk(1,{}).date, notes:'Heater + thermometer' },
+      { id: uid(), tankId, category:'livestock', amount:42, date: mk(30,{}).date, notes:'Pleco + neon tetra shoal' },
+      { id: uid(), tankId, category:'supplies', amount:16.75, date: mk(40,{}).date, notes:'Flakes, wafers, water conditioner' },
+    ],
+    treatments: [
+      { id: uid(), tankId, date: mk(42,{}).date, product:'Seachem Prime', amount:'5 mL', notes:'weekly dechlorinator, with the water change' },
+      { id: uid(), tankId, date: mk(0,{}).date, product:'Seachem Stability', amount:'10 mL', notes:'cycle boost' },
+    ],
+  };
+}
+
+/* ---------------- auth + per-account db wiring ----------------
+   Each signed-in account's data lives under users/{their uid}/... in
+   Firestore, so one person can never see another's tanks. See the
+   firebaseConfig block near the top of this file, and the security
+   rules in the accompanying README. */
+let currentUid = null;
+const collections = ['tanks','waterTests','livestock','maintenance','foods','feeding','expenses','treatments'];
+
+function waitForFb(){
+  return new Promise(resolve => {
+    if(window.__fb) return resolve();
+    window.addEventListener('fb-ready', () => resolve(), { once:true });
+  });
+}
+
+async function initAuth(){
+  await waitForFb();
+  window.__fb.onAuthChange(async (user) => {
+    if(user){
+      currentUid = user.uid;
+      $('#authScreen').classList.add('hidden');
+      document.body.classList.remove('auth-pending');
+      $('#accountEmail').hidden = false;
+      $('#accountEmail').textContent = user.email || '';
+      $('#signOutBtn').hidden = false;
+      await loadAccountData();
+    } else {
+      currentUid = null;
+      document.body.classList.add('auth-pending');
+      $('#authScreen').classList.remove('hidden');
+      $('#accountEmail').hidden = true;
+      $('#signOutBtn').hidden = true;
+    }
+  });
+}
+
+async function loadAccountData(){
+  const [snaps, savedSettings] = await Promise.all([
+    Promise.all(collections.map(c => window.__fb.getCollection(currentUid, c).catch(()=>[]))),
+    window.__fb.getSettings(currentUid).catch(()=>null),
+  ]);
+  if(savedSettings) Object.assign(settings, savedSettings);
+  // No example-tank seeding here — a real account starts truly empty;
+  // the "+ Tank" button (or the empty-state button) adds the first one.
+  collections.forEach((c,i) => { state[c] = snaps[i]; });
+  activeTankId = state.tanks[0]?.id ?? null;
+  render();
+}
+
+async function setParamUnit(unit){
+  settings.paramUnit = unit;
+  if(currentUid){ await window.__fb.setSettings(currentUid, settings).catch(()=>{}); }
+  render();
+}
+
+async function dbAdd(collection, data){
+  const id = uid();
+  state[collection].push({ id, ...data });
+  if(currentUid){ await window.__fb.setDoc(currentUid, collection, id, data).catch(()=>{}); }
+  return id;
+}
+async function dbUpdate(collection, id, patch){
+  const item = state[collection].find(x => x.id === id);
+  if(item) Object.assign(item, patch);
+  if(currentUid){ await window.__fb.updateDoc(currentUid, collection, id, patch).catch(async () => {
+    await window.__fb.setDoc(currentUid, collection, id, item).catch(()=>{});
+  }); }
+}
+async function dbDelete(collection, id){
+  state[collection] = state[collection].filter(x => x.id !== id);
+  if(currentUid){ await window.__fb.deleteDoc(currentUid, collection, id).catch(()=>{}); }
+}
+
+/* ---------------- auth screen wiring ---------------- */
+let authMode = 'signin'; // 'signin' | 'signup'
+function setAuthMode(mode){
+  authMode = mode;
+  $('#authTitle').textContent = mode === 'signin' ? 'Sign in' : 'Create an account';
+  $('#authSubmit').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
+  $('#authSwitchText').textContent = mode === 'signin' ? 'New here?' : 'Already have an account?';
+  $('#authSwitchBtn').textContent = mode === 'signin' ? 'Create an account' : 'Sign in instead';
+  $('#authError').classList.add('hidden');
+}
+function authErr(msg){
+  $('#authError').textContent = msg;
+  $('#authError').classList.remove('hidden');
+}
+(function initAuthScreen(){
+  $('#authSwitchBtn').onclick = () => setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+  $('#authForgotBtn').onclick = async () => {
+    const email = $('#authEmail').value.trim();
+    if(!email){ authErr('Enter your email above first, then click "Forgot password?" again.'); return; }
+    await waitForFb();
+    try{ await window.__fb.resetPassword(email); authErr('Password reset email sent — check your inbox.'); $('#authError').style.color='var(--good)'; }
+    catch(e){ authErr(friendlyAuthError(e)); $('#authError').style.color=''; }
+  };
+  $('#authForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const email = $('#authEmail').value.trim();
+    const password = $('#authPassword').value;
+    $('#authSubmit').disabled = true;
+    await waitForFb();
+    try{
+      if(authMode === 'signin') await window.__fb.signIn(email, password);
+      else await window.__fb.signUp(email, password);
+    }catch(e){ authErr(friendlyAuthError(e)); }
+    $('#authSubmit').disabled = false;
+  };
+})();
+function friendlyAuthError(e){
+  const code = e?.code || '';
+  if(code.includes('wrong-password') || code.includes('invalid-credential')) return 'Wrong email or password.';
+  if(code.includes('user-not-found')) return 'No account with that email — try "Create an account" below.';
+  if(code.includes('email-already-in-use')) return 'That email already has an account — try signing in instead.';
+  if(code.includes('weak-password')) return 'Password should be at least 6 characters.';
+  if(code.includes('invalid-email')) return 'That email address doesn\'t look right.';
+  return e?.message || 'Something went wrong — try again.';
+}
+$('#signOutBtn').onclick = async () => { await waitForFb(); await window.__fb.signOutUser(); };
+
+/* ---------------- derived ---------------- */
+function tankData(tankId){
+  return {
+    tank: state.tanks.find(t=>t.id===tankId),
+    tests: state.waterTests.filter(w=>w.tankId===tankId).sort((a,b)=>a.date.localeCompare(b.date)),
+    stock: state.livestock.filter(l=>l.tankId===tankId),
+    tasks: state.maintenance.filter(m=>m.tankId===tankId),
+    foods: state.foods.filter(fd=>fd.tankId===tankId),
+    feed: state.feeding.filter(f=>f.tankId===tankId).sort((a,b)=>b.date.localeCompare(a.date)),
+    expenses: state.expenses.filter(x=>x.tankId===tankId).sort((a,b)=>b.date.localeCompare(a.date)),
+    treatments: state.treatments.filter(x=>x.tankId===tankId).sort((a,b)=>b.date.localeCompare(a.date)),
+  };
+}
+const EXPENSE_CATEGORY_LABEL = { equipment:'Equipment', livestock:'Livestock', supplies:'Supplies', other:'Other' };
+function nextDue(task){ return daysAdd(task.lastDone, task.intervalDays); }
+function daysAdd(iso, n){ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function dueStatus(task){
+  const due = nextDue(task);
+  const d = daysBetween(todayISO(), due);
+  if(d < 0) return {cls:'pill-critical', text:`${-d}d overdue`};
+  if(d <= 1) return {cls:'pill-warn', text: d===0 ? 'Due today' : 'Due tomorrow'};
+  return {cls:'pill-good', text:`Due in ${d}d`};
+}
+
+/* ---------------- rendering ---------------- */
+function render(){
+  renderTabs();
+  const main = $('#main');
+  if(!state.tanks.length){
+    main.innerHTML = `
+      <div class="empty">
+        <h2>No tanks yet</h2>
+        <p>Add your first tank to start logging water tests, upkeep, and livestock.</p>
+        <button class="btn btn-primary" id="emptyAddTank">+ Add a tank</button>
+      </div>`;
+    $('#emptyAddTank').onclick = () => openTankForm();
+    return;
+  }
+  if(!activeTankId || !state.tanks.find(t=>t.id===activeTankId)) activeTankId = state.tanks[0].id;
+  const { tank, tests, stock, tasks, foods, feed, expenses, treatments } = tankData(activeTankId);
+
+  const overdue = tasks.filter(t => daysBetween(todayISO(), nextDue(t)) < 0).length;
+  const latest = tests[tests.length-1];
+  const ageDays = daysBetween(tank.startDate, todayISO());
+  const totalSpent = expenses.reduce((n,x)=>n+(Number(x.amount)||0),0);
+
+  main.innerHTML = `
+    ${tank.isExample ? `<div class="example-banner"><span>🐟</span><span><strong>Example tank</strong> — this is sample data so the log has something to show. Edit it, or <button type="button" class="link-btn" id="deleteExampleTankBtn">delete it</button> and add your own from the “+ Tank” button.</span></div>` : ''}
+
+    <div class="summary-strip">
+      <div class="stat"><div class="label">Running</div><div class="value">${ageDays}<span class="value unit"> days</span></div></div>
+      <div class="stat"><div class="label">Volume</div><div class="value">${tank.gallons}<span class="value unit"> gal</span></div></div>
+      <div class="stat"><div class="label">Livestock</div><div class="value">${stock.reduce((n,s)=>n+(Number(s.qty)||1),0)}<span class="value unit"> animals/plants</span></div></div>
+      <div class="stat"><div class="label">Upkeep</div><div class="value" style="color:${overdue? 'var(--critical)':'var(--good)'}">${overdue ? overdue+' overdue' : 'On track'}</div></div>
+      <div class="stat"><div class="label">Spent</div><div class="value mono">$${totalSpent.toFixed(2)}</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="col">
+        <div class="card" id="waterCard"></div>
+        <div class="card" id="expenseCard"></div>
+        <div class="card" id="treatmentCard"></div>
+      </div>
+      <div class="col">
+        <div class="card" id="taskCard"></div>
+        <div class="card" id="animalCard"></div>
+        <div class="card" id="plantCard"></div>
+        <div class="card" id="feedCard"></div>
+      </div>
+    </div>
+  `;
+
+  if(tank.isExample) $('#deleteExampleTankBtn').onclick = () => openDeleteTankConfirm(tank.id);
+  renderWaterCard(tests);
+  renderTaskCard(tasks);
+  renderAnimalCard(stock);
+  renderPlantCard(stock);
+  renderFeedCard(feed, stock, foods);
+  renderExpenseCard(expenses);
+  renderTreatmentCard(treatments);
+}
+
+function renderTabs(){
+  const wrap = $('#tankTabs');
+  wrap.innerHTML = state.tanks.map(t => `
+    <span class="tank-tab-wrap">
+      <button class="tank-tab ${t.id===activeTankId?'active':''}" data-id="${t.id}">${esc(t.name)}${t.isQuarantine ? '<span class="qt-badge">QT</span>' : ''}</button>
+      <button type="button" class="tank-tab-del" data-del-tank="${t.id}" title="Delete this tank">✕</button>
+    </span>
+  `).join('');
+  $$('.tank-tab', wrap).forEach(btn => btn.onclick = () => { activeTankId = btn.dataset.id; render(); });
+  $$('[data-del-tank]', wrap).forEach(btn => btn.onclick = (e) => { e.stopPropagation(); openDeleteTankConfirm(btn.dataset.delTank); });
+  $('#addTankBtn').onclick = () => openTankForm();
+}
+
+/* ---- delete tank (and everything under it) ---- */
+let pendingDeleteTankId = null;
+function openDeleteTankConfirm(tankId){
+  pendingDeleteTankId = tankId;
+  const t = state.tanks.find(x => x.id === tankId);
+  if(!t) return;
+  $('#deleteTankSub').textContent = `This removes “${t.name}” and everything logged under it — water tests, livestock, maintenance, feeding, expenses, and treatments. This can't be undone.`;
+  $('#deleteTankModalOverlay').classList.remove('hidden');
+}
+function closeDeleteTankConfirm(){
+  pendingDeleteTankId = null;
+  $('#deleteTankModalOverlay').classList.add('hidden');
+}
+$('#deleteTankCancel').onclick = closeDeleteTankConfirm;
+$('#deleteTankModalOverlay').onclick = (e) => { if(e.target.id === 'deleteTankModalOverlay') closeDeleteTankConfirm(); };
+$('#deleteTankConfirm').onclick = async () => {
+  const tankId = pendingDeleteTankId;
+  if(!tankId) return;
+  const childCollections = ['waterTests','livestock','maintenance','foods','feeding','expenses','treatments'];
+  for(const c of childCollections){
+    const toRemove = state[c].filter(x => x.tankId === tankId);
+    for(const item of toRemove) await dbDelete(c, item.id);
+  }
+  await dbDelete('tanks', tankId);
+  if(activeTankId === tankId) activeTankId = state.tanks[0]?.id ?? null;
+  closeDeleteTankConfirm();
+  render();
+};
+
+/* ---- water parameters ---- */
+const PARAM_DEFS = [
+  { key:'ammonia', label:'Ammonia', color:'var(--critical)' },
+  { key:'nitrite', label:'Nitrite', color:'var(--warn)' },
+  { key:'nitrate', label:'Nitrate', color:'var(--teal)' },
+  { key:'ph', label:'pH', color:'var(--indigo)' },
+];
+function unitLabel(){ return settings.paramUnit === 'mgl' ? 'mg/L' : 'ppm'; }
+
+function renderWaterCard(tests){
+  const card = $('#waterCard');
+  const u = unitLabel();
+  card.innerHTML = `
+    <div class="card-head">
+      <div><h2>Water parameters</h2><div class="sub">${tests.length} test${tests.length===1?'':'s'} logged</div></div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="unit-toggle">
+          <button type="button" data-unit="ppm" class="${settings.paramUnit!=='mgl'?'active':''}">ppm</button>
+          <button type="button" data-unit="mgl" class="${settings.paramUnit==='mgl'?'active':''}">mg/L</button>
+        </div>
+        <button class="btn btn-sm" id="toggleTestForm">+ Log a test</button>
+      </div>
+    </div>
+    <div class="chart-wrap">${tests.length ? drawChart(tests) : `<div class="muted-empty">No water tests yet — log one below.</div>`}</div>
+    ${tests.length ? `<div class="chart-legend">${PARAM_DEFS.map(p=>`<span><i style="background:${p.color}"></i>${p.label}${p.key!=='ph'?' ('+u+')':''}</span>`).join('')}</div>` : ''}
+    ${tests.length>1 ? `<div class="scrub-hint-static">Drag (or hover) across the chart to compare any two logs.</div><div class="scrub-panel hidden" id="scrubPanel"></div>` : ''}
+    <form class="inline-form hidden" id="testForm">
+      <div class="field"><label>Date</label><input type="date" name="date" value="${todayISO()}" required></div>
+      <div class="field"><label>Ammonia (${u})</label><input class="mono" type="number" step="0.1" min="0" name="ammonia"></div>
+      <div class="field"><label>Nitrite (${u})</label><input class="mono" type="number" step="0.1" min="0" name="nitrite"></div>
+      <div class="field"><label>Nitrate (${u})</label><input class="mono" type="number" step="1" min="0" name="nitrate"></div>
+      <div class="field"><label>pH</label><input class="mono" type="number" step="0.1" min="0" max="14" name="ph"></div>
+      <div class="field"><label>Temp (°F)</label><input class="mono" type="number" step="1" name="temp"></div>
+      <div class="field grow"><label>Notes</label><input type="text" name="notes" placeholder="optional"></div>
+      <div class="form-actions"><button type="submit" class="btn btn-primary btn-sm">Save</button></div>
+    </form>
+    ${tests.length ? `<div class="table-scroll"><table>
+      <thead><tr><th>Date</th><th class="num">NH₃</th><th class="num">NO₂</th><th class="num">NO₃</th><th class="num">pH</th><th class="num">°F</th><th></th></tr></thead>
+      <tbody>${tests.slice().reverse().map(t => `
+        <tr>
+          <td>${fmtDate(t.date)}</td>
+          <td class="mono">${fmtNum(t.ammonia)}</td>
+          <td class="mono">${fmtNum(t.nitrite)}</td>
+          <td class="mono">${fmtNum(t.nitrate)}</td>
+          <td class="mono">${fmtNum(t.ph)}</td>
+          <td class="mono">${fmtNum(t.temp)}</td>
+          <td class="row-actions">
+            <button class="btn-ghost btn-sm" data-advice="${t.id}" title="Get advice">💡 Advice</button>
+            <button class="btn-ghost" data-del-test="${t.id}" title="Delete">✕</button>
+          </td>
+        </tr>`).join('')}</tbody>
+    </table></div>` : ''}
+    <div id="advicePanel"></div>
+  `;
+  $$('.unit-toggle button', card).forEach(b => b.onclick = () => setParamUnit(b.dataset.unit));
+  $('#toggleTestForm').onclick = () => $('#testForm').classList.toggle('hidden');
+  $('#testForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const data = { tankId: activeTankId, date: f.get('date') };
+    ['ammonia','nitrite','nitrate','ph','temp'].forEach(k => { const v=f.get(k); if(v!=='') data[k]=Number(v); });
+    data.notes = f.get('notes') || '';
+    await dbAdd('waterTests', data);
+    render();
+  };
+  $$('[data-del-test]', card).forEach(b => b.onclick = async () => { await dbDelete('waterTests', b.dataset.delTest); render(); });
+  $$('[data-advice]', card).forEach(b => b.onclick = () => requestAdvice(b.dataset.advice, tests));
+  renderAdvicePanel();
+  if(tests.length>1) setupChartScrubber(tests);
+}
+function fmtNum(n){ return (n===undefined || n===null || n==='') ? '—' : n; }
+
+/* ---- advice — curated from published fishkeeping sources, not AI-generated ----
+   Each rule below traces to a specific article/community thread (see SOURCES).
+   The numbers you log are matched against their published thresholds; nothing here is composed on the fly. */
+const SOURCES = {
+  aqueonQuality: { title:'Aqueon — Freshwater Aquarium Water Quality', url:'https://www.aqueon.com/articles/freshwater-aquarium-water-quality' },
+  aqueonPh:      { title:'Aqueon — Aquarium pH', url:'https://www.aqueon.com/articles/aquarium-ph' },
+  shrimpFarm:    { title:'The Shrimp Farm — Understanding Ammonia for Freshwater Shrimp', url:'https://www.theshrimpfarm.com/posts/understanding-ammonia-freshwater-shrimp/' },
+  humbleFish:    { title:'Humble.Fish community — How to Deal with an Ammonia Spike', url:'https://humble.fish/community/threads/how-to-deal-with-an-ammonia-spike.5088/' },
+  aquariumCoop:  { title:'Aquarium Co-Op — Is Nitrate Good or Bad for Your Aquarium?', url:'https://www.aquariumcoop.com/blogs/aquarium/nitrate' },
+};
+
+function buildAdvice(test, prevTest, stock){
+  const hasInvert = stock.some(s => s.category === 'invert');
+  const hasPlant = stock.some(s => s.category === 'plant');
+  const u = unitLabel();
+  const items = [];
+
+  if(test.ammonia != null){
+    if(test.ammonia <= 0){
+      items.push({ text:`Ammonia is at 0 ${u} — that's the only safe level; any reading above zero is considered toxic.`, source: SOURCES.aqueonQuality });
+    } else {
+      items.push({ text:`Ammonia is reading ${test.ammonia} ${u}. Any ammonia above zero is dangerous, and it gets more toxic at higher pH and warmer temperatures.`, source: SOURCES.aqueonQuality });
+      items.push({ text:`To bring it down: do a water change, dose a detoxifier like Seachem Prime to bind it into a less harmful form for about 24 hours, cut feeding by roughly half, and add bottled bacteria to speed the tank's cycle back up.`, source: SOURCES.humbleFish });
+      if(hasInvert){
+        items.push({ text:`This tank has shrimp or snails, and they're far more sensitive than fish — shrimp keepers treat anything above about 0.03 ${u} as harmful, so don't wait this one out.`, source: SOURCES.shrimpFarm });
+      }
+    }
+  }
+
+  if(test.nitrite != null){
+    if(test.nitrite <= 0){
+      items.push({ text:`Nitrite is at 0 ${u}, the only safe level — it suffocates fish by blocking oxygen uptake once it rises above zero.`, source: SOURCES.aqueonQuality });
+    } else {
+      items.push({ text:`Nitrite is reading ${test.nitrite} ${u}; it should read zero. Watch for rapid breathing, gasping at the surface, or gills fading from red toward a dull brown/grey — treat it the same as an ammonia spike, with water changes and bacteria supplementation until it's back to zero.`, source: SOURCES.aqueonQuality });
+    }
+  }
+
+  if(test.nitrate != null){
+    if(hasPlant && test.nitrate < 20){
+      items.push({ text:`Nitrate is on the low side for a planted tank at ${test.nitrate} ${u}. Below about 20 ${u}, plants can start showing deficiencies — yellowing or translucent leaf tips that eventually melt away — so a light fertilizer dose is worth considering.`, source: SOURCES.aquariumCoop });
+    } else if(test.nitrate > 50){
+      items.push({ text:`Nitrate is at ${test.nitrate} ${u}. Most freshwater guidance puts the comfortable ceiling around 50 ${u}, though most fish can tolerate up to roughly 80-100 ${u}. A 30-50% water change brings it down quickly; longer term, ease up on feeding, add fast-growing plants, or consider more tank volume.`, source: SOURCES.aquariumCoop });
+    } else {
+      items.push({ text:`Nitrate is at ${test.nitrate} ${u} — a comfortable range for fish, and fine for live plants too.`, source: SOURCES.aquariumCoop });
+    }
+  }
+
+  if(test.ph != null){
+    let swingNote = '';
+    if(prevTest && prevTest.ph != null){
+      const delta = Math.abs(test.ph - prevTest.ph);
+      if(delta >= 0.3) swingNote = ` That's a swing of ${delta.toFixed(1)} from the last reading — sudden swings like that are more stressful to fish and shrimp than a steady number that's slightly "off."`;
+    }
+    items.push({ text:`pH is at ${test.ph}. Stability matters more than hitting an exact number — most fish adapt fine to a stable pH, while sudden swings are what actually causes stress.${swingNote} Only adjust pH deliberately (RO/DI water, driftwood or peat to lower it; crushed coral or limestone to raise it), and do it before adding livestock, never as a quick fix with fish already in the tank.`, source: SOURCES.aqueonPh });
+  }
+
+  if(!items.length) items.push({ text:`This test has no readings logged yet.`, source:null });
+  return items;
+}
+
+let activeAdviceTestId = null;
+function requestAdvice(testId, tests){
+  if(activeAdviceTestId === testId){ activeAdviceTestId = null; renderAdvicePanel(); return; }
+  activeAdviceTestId = testId;
+  const idx = tests.findIndex(t => t.id === testId);
+  const test = tests[idx];
+  const prevTest = idx > 0 ? tests[idx-1] : null;
+  const { stock } = tankData(activeTankId);
+  adviceState[testId] = { items: buildAdvice(test, prevTest, stock) };
+  renderAdvicePanel();
+}
+function renderAdvicePanel(){
+  const panel = $('#advicePanel');
+  if(!panel) return;
+  if(!activeAdviceTestId || !adviceState[activeAdviceTestId]){ panel.innerHTML=''; return; }
+  const items = adviceState[activeAdviceTestId].items;
+  panel.innerHTML = `
+    <div class="advice-panel">
+      <div class="advice-head"><strong>💡 What fishkeepers say about this test</strong><button class="advice-close" id="closeAdvice">Close</button></div>
+      ${items.map(i => `
+        <div class="advice-item">
+          <div>${esc(i.text)}</div>
+          ${i.source ? `<a class="advice-source" href="${esc(i.source.url)}" target="_blank" rel="noopener">— ${esc(i.source.title)} ↗</a>` : ''}
+        </div>`).join('')}
+    </div>`;
+  $('#closeAdvice').onclick = () => { activeAdviceTestId = null; renderAdvicePanel(); };
+}
+
+const CHART_META = { W:640, H:200, padL:34, padR:22, padT:22, padB:24 };
+
+function drawChart(tests){
+  const { W, H, padL, padR, padT, padB } = CHART_META;
+  const x = (i) => padL + (i/(Math.max(tests.length-1,1))) * (W-padL-padR);
+
+  // two y-scales: ppm-ish params (ammonia/nitrite/nitrate) share one scale, pH gets its own
+  const ppmVals = tests.flatMap(t => [t.ammonia,t.nitrite,t.nitrate]).filter(v=>v!=null);
+  const ppmMax = Math.max(5, ...ppmVals, 1);
+  const yPpm = (v) => H-padB - (v/ppmMax)*(H-padT-padB);
+  const phVals = tests.map(t=>t.ph).filter(v=>v!=null);
+  const phMin = phVals.length ? Math.min(6, ...phVals) : 6;
+  const phMax = phVals.length ? Math.max(8, ...phVals) : 8;
+  const yPh = (v) => H-padB - ((v-phMin)/(phMax-phMin||1))*(H-padT-padB);
+
+  const gridLines = [0,0.25,0.5,0.75,1].map(f => {
+    const y = padT + f*(H-padT-padB);
+    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
+  }).join('');
+
+  const yLabels = [0, ppmMax/2, ppmMax].map(v => {
+    const y = yPpm(v);
+    return `<text x="${padL-6}" y="${y+3}" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="IBM Plex Mono">${v.toFixed(v<2?1:0)}</text>`;
+  }).join('');
+
+  function pathFor(key, yFn){
+    const pts = tests.map((t,i) => t[key]!=null ? [x(i), yFn(t[key])] : null);
+    // draw contiguous segments only (skip gaps)
+    let d = '', drawing = false;
+    pts.forEach(p => {
+      if(!p){ drawing=false; return; }
+      d += (drawing ? ' L ' : 'M ') + p[0].toFixed(1) + ' ' + p[1].toFixed(1);
+      drawing = true;
+    });
+    return d;
+  }
+  function dotsFor(key, yFn, color){
+    return tests.map((t,i) => t[key]!=null ? `<circle cx="${x(i).toFixed(1)}" cy="${yFn(t[key]).toFixed(1)}" r="2.6" fill="${color}"/>` : '').join('');
+  }
+
+  const lines = PARAM_DEFS.map(p => {
+    const yFn = p.key==='ph' ? yPh : yPpm;
+    const d = pathFor(p.key, yFn);
+    if(!d) return '';
+    return `<path d="${d}" fill="none" stroke="${p.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${dotsFor(p.key,yFn,p.color)}`;
+  }).join('');
+
+  const xLabels = tests.map((t,i) => {
+    if(tests.length>1 && i%Math.ceil(tests.length/6)!==0 && i!==tests.length-1 && i!==0) return '';
+    const anchor = i===0 ? 'start' : (i===tests.length-1 ? 'end' : 'middle');
+    return `<text x="${x(i).toFixed(1)}" y="${H-6}" text-anchor="${anchor}" font-size="10" fill="var(--ink-faint)" font-family="IBM Plex Mono">${fmtDate(t.date)}</text>`;
+  }).join('');
+
+  return `<svg class="chart" id="waterChartSvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" role="img" aria-label="Water parameter trend chart">
+    ${gridLines}${yLabels}${lines}${xLabels}
+    <text x="${padL-6}" y="12" text-anchor="end" font-size="9" fill="var(--ink-faint)" font-family="IBM Plex Mono">${unitLabel()}</text>
+  </svg>`;
+}
+
+/* ---- chart scrubber: drag/hover to compare any reading against the one before it ---- */
+function setupChartScrubber(tests){
+  const svg = document.getElementById('waterChartSvg');
+  const panel = document.getElementById('scrubPanel');
+  if(!svg || !panel) return;
+  const { W, H, padL, padR, padT, padB } = CHART_META;
+  const xFor = (i) => padL + (i/(Math.max(tests.length-1,1))) * (W-padL-padR);
+
+  function nearestIndex(clientX, clientY){
+    let relX;
+    try{
+      const pt = svg.createSVGPoint();
+      pt.x = clientX; pt.y = clientY != null ? clientY : 0;
+      const ctm = svg.getScreenCTM();
+      const svgPt = pt.matrixTransform(ctm.inverse());
+      relX = svgPt.x;
+    } catch(err){
+      const rect = svg.getBoundingClientRect();
+      relX = (clientX - rect.left) / rect.width * W;
+    }
+    let best = 0, bestD = Infinity;
+    tests.forEach((t,i) => { const d = Math.abs(xFor(i)-relX); if(d < bestD){ bestD = d; best = i; } });
+    return best;
+  }
+  function drawGuide(idx){
+    const xPos = xFor(idx).toFixed(1);
+    let line = svg.querySelector('#scrubLine');
+    if(!line){
+      svg.insertAdjacentHTML('beforeend', `<line id="scrubLine" x1="${xPos}" y1="${padT}" x2="${xPos}" y2="${H-padB}" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="3,3"/>`);
+    } else {
+      line.setAttribute('x1', xPos); line.setAttribute('x2', xPos);
+    }
+  }
+  function clearGuide(){ const line = svg.querySelector('#scrubLine'); if(line) line.remove(); }
+  function deltaHtml(t, prev, key, digits){
+    if(t[key] == null || !prev || prev[key] == null) return '';
+    const d = t[key] - prev[key];
+    if(Math.abs(d) < (digits === 0 ? 0.5 : 0.0049)) return ` <span class="delta delta-flat">no change</span>`;
+    const sign = d > 0 ? '+' : '';
+    return ` <span class="delta ${d>0?'delta-up':'delta-down'}">${sign}${d.toFixed(digits)} since ${fmtDate(prev.date)}</span>`;
+  }
+  function showTooltip(idx){
+    const t = tests[idx];
+    const prev = idx > 0 ? tests[idx-1] : null;
+    const u = unitLabel();
+    panel.classList.remove('hidden');
+    panel.innerHTML = `
+      <div class="scrub-date">${fmtDate(t.date)}${idx===tests.length-1?' (latest)':''}</div>
+      <div class="scrub-row"><i style="background:${PARAM_DEFS[0].color}"></i>Ammonia <b class="mono">${fmtNum(t.ammonia)} ${u}</b>${deltaHtml(t,prev,'ammonia',2)}</div>
+      <div class="scrub-row"><i style="background:${PARAM_DEFS[1].color}"></i>Nitrite <b class="mono">${fmtNum(t.nitrite)} ${u}</b>${deltaHtml(t,prev,'nitrite',2)}</div>
+      <div class="scrub-row"><i style="background:${PARAM_DEFS[2].color}"></i>Nitrate <b class="mono">${fmtNum(t.nitrate)} ${u}</b>${deltaHtml(t,prev,'nitrate',0)}</div>
+      <div class="scrub-row"><i style="background:${PARAM_DEFS[3].color}"></i>pH <b class="mono">${fmtNum(t.ph)}</b>${deltaHtml(t,prev,'ph',1)}</div>
+      ${!prev ? `<div class="scrub-hint">First test on record — nothing earlier to compare.</div>` : ''}
+    `;
+  }
+  function handle(e){
+    const point = e.touches ? e.touches[0] : e;
+    const clientX = point.clientX, clientY = point.clientY;
+    if(clientX == null) return;
+    const idx = nearestIndex(clientX, clientY);
+    drawGuide(idx);
+    showTooltip(idx);
+  }
+  svg.style.touchAction = 'none';
+  svg.addEventListener('pointerdown', handle);
+  svg.addEventListener('pointermove', handle);
+  svg.addEventListener('pointerleave', () => { clearGuide(); panel.classList.add('hidden'); panel.innerHTML=''; });
+}
+
+/* ---- maintenance ---- */
+function renderTaskCard(tasks){
+  const card = $('#taskCard');
+  card.innerHTML = `
+    <div class="card-head">
+      <div><h2>Upkeep</h2><div class="sub">${tasks.length} recurring task${tasks.length===1?'':'s'}</div></div>
+      <button class="btn btn-sm" id="toggleTaskForm">+ Task</button>
+    </div>
+    <div class="task-list">
+      ${tasks.length ? tasks.map(t => {
+        const status = dueStatus(t);
+        return `<div class="task-row">
+          <div class="info">
+            <div class="name">${esc(t.label)}</div>
+            <div class="meta">every ${t.intervalDays}d · last done ${fmtDate(t.lastDone)}${t.notes ? ' · '+esc(t.notes) : ''}</div>
+          </div>
+          <span class="pill ${status.cls}">${status.text}</span>
+          <button class="btn btn-sm" data-done="${t.id}">Done</button>
+          <button class="btn-ghost" data-del-task="${t.id}" title="Delete">✕</button>
+        </div>`;
+      }).join('') : `<div class="muted-empty">No recurring tasks yet.</div>`}
+    </div>
+    <form class="inline-form hidden" id="taskForm">
+      <div class="field grow"><label>Task</label><input type="text" name="label" placeholder="e.g. 20% water change" required></div>
+      <div class="field"><label>Every (days)</label><input class="mono" type="number" min="1" name="intervalDays" value="7" required></div>
+      <div class="field"><label>Last done</label><input type="date" name="lastDone" value="${todayISO()}" required></div>
+      <div class="field grow"><label>Notes</label><input type="text" name="notes" placeholder="optional"></div>
+      <div class="form-actions"><button type="submit" class="btn btn-primary btn-sm">Add</button></div>
+    </form>
+  `;
+  $('#toggleTaskForm').onclick = () => $('#taskForm').classList.toggle('hidden');
+  $('#taskForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    await dbAdd('maintenance', {
+      tankId: activeTankId, label:f.get('label'), intervalDays:Number(f.get('intervalDays')),
+      lastDone:f.get('lastDone'), notes:f.get('notes')||''
+    });
+    render();
+  };
+  $$('[data-done]', card).forEach(b => b.onclick = async () => { await dbUpdate('maintenance', b.dataset.done, {lastDone: todayISO()}); render(); });
+  $$('[data-del-task]', card).forEach(b => b.onclick = async () => { await dbDelete('maintenance', b.dataset.delTask); render(); });
+}
+
+/* ---- livestock ---- */
+const CATEGORY_OPTIONS = (selected) => Object.entries(CATEGORY_LABEL)
+  .map(([v,label]) => `<option value="${v}" ${v===selected?'selected':''}>${label}</option>`).join('');
+
+/* Suggested-species datalists — hobbyist picks a common name or types their own; either way is accepted. */
+const SUGGESTED_ANIMALS = [
+  'Neon Tetra','Cardinal Tetra','Ember Tetra','Guppy','Betta','Molly','Platy','Zebra Danio',
+  'Cherry Barb','Tiger Barb','Corydoras (Cory Catfish)','Bristlenose Pleco','Common Pleco',
+  'Angelfish','Discus','Kuhli Loach','Otocinclus','Swordtail','Rainbow Shark',
+  'Harlequin Rasbora','Dwarf Gourami','Honey Gourami','Killifish',"Endler's Livebearer",
+  'Goldfish','White Cloud Mountain Minnow','German Blue Ram','Convict Cichlid','Clownfish',
+  'Cherry Shrimp (Neocaridina)','Amano Shrimp','Ghost Shrimp','Nerite Snail','Mystery Snail',
+  'Ramshorn Snail','Assassin Snail','Zoanthid Coral','Hammer Coral','Torch Coral','Mushroom Coral',
+];
+const SUGGESTED_PLANTS = [
+  'Java Fern','Anubias Nana','Amazon Sword','Java Moss','Vallisneria','Cryptocoryne Wendtii',
+  'Water Wisteria','Hornwort','Dwarf Hairgrass','Water Sprite','Red Root Floater','Amazon Frogbit',
+  'Anacharis (Elodea)','Rotala Rotundifolia','Ludwigia Repens','Pogostemon Stellatus (Star Grass)',
+  'Christmas Moss','Bucephalandra','Marimo Moss Ball','Dwarf Baby Tears (HC)','Bacopa Caroliniana',
+  'Micro Sword','Water Lettuce',
+];
+
+let editingStockId = null;
+
+function renderStockSection({ cardId, kind, title, items, suggestions, defaultCategory, categoryField }){
+  const card = $('#'+cardId);
+  const listId = cardId + 'Datalist';
+  card.innerHTML = `
+    <div class="card-head">
+      <div><h2>${title}</h2><div class="sub">${items.length} entr${items.length===1?'y':'ies'}</div></div>
+      <button class="btn btn-sm" data-toggle-form>+ Add</button>
+    </div>
+    <datalist id="${listId}">${suggestions.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+    <div class="stock-grid">
+      ${items.length ? items.map(s => s.id === editingStockId ? `
+        <form class="stock-card stock-edit" data-edit-stock="${s.id}">
+          <div class="field"><label>Name</label><input type="text" name="name" value="${esc(s.name)}" required></div>
+          <div class="field"><label>Species</label><input type="text" name="species" value="${esc(s.species||'')}" list="${listId}"></div>
+          ${categoryField ? `<div class="field"><label>Type</label><select name="category">${CATEGORY_OPTIONS(s.category)}</select></div>` : ''}
+          <div class="field"><label>Qty</label><input class="mono" type="number" min="0" name="qty" value="${s.qty}"></div>
+          <div class="field"><label>Added</label><input type="date" name="addedDate" value="${s.addedDate}"></div>
+          <div class="field"><label>Photo URL</label><input type="url" name="photoUrl" value="${esc(s.photoUrl||'')}" placeholder="optional"></div>
+          <div class="form-actions" style="margin-top:8px;">
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+            <button type="button" class="btn btn-sm" data-cancel-stock>Cancel</button>
+          </div>
+        </form>
+      ` : `
+        <div class="stock-card">
+          ${s.photoUrl ? `<img class="thumb" src="${esc(s.photoUrl)}" alt="${esc(s.name)}" onerror="this.remove()">` : ''}
+          ${categoryField ? `<div class="cat">${CATEGORY_LABEL[s.category]||s.category}</div>` : ''}
+          <div class="sp">${esc(s.name)}</div>
+          <div class="meta">${esc(s.species||'')}</div>
+          <div class="qty-stepper">
+            <button type="button" class="btn-ghost btn-sm" data-qty-dec="${s.id}" ${s.qty<=0?'disabled':''} title="One died / removed">−</button>
+            <span class="mono qty-val">${s.qty}</span>
+            <button type="button" class="btn-ghost btn-sm" data-qty-inc="${s.id}" title="Bought more">+</button>
+          </div>
+          <div class="meta">since ${fmtDate(s.addedDate)}</div>
+          <div class="stock-actions">
+            <button class="btn-ghost btn-sm" data-edit-stock-btn="${s.id}">Edit</button>
+            <button class="btn-ghost btn-sm" data-del-stock="${s.id}">Remove</button>
+          </div>
+        </div>`).join('') : `<div class="muted-empty">Nothing logged yet.</div>`}
+    </div>
+    <form class="inline-form hidden" data-add-form>
+      <div class="field grow"><label>Name</label><input type="text" name="name" placeholder="a nickname, or just the species" required></div>
+      <div class="field grow"><label>Species</label><input type="text" name="species" list="${listId}" placeholder="pick a common one or type your own"></div>
+      ${categoryField ? `<div class="field"><label>Type</label><select name="category">${CATEGORY_OPTIONS(defaultCategory)}</select></div>` : ''}
+      <div class="field"><label>Qty</label><input class="mono" type="number" min="1" name="qty" value="1"></div>
+      <div class="field"><label>Added</label><input type="date" name="addedDate" value="${todayISO()}"></div>
+      <div class="field grow"><label>Photo URL</label><input type="url" name="photoUrl" placeholder="paste an image link (optional)"></div>
+      <div class="form-actions"><button type="submit" class="btn btn-primary btn-sm">Add</button></div>
+    </form>
+  `;
+  const addForm = card.querySelector('[data-add-form]');
+  card.querySelector('[data-toggle-form]').onclick = () => addForm.classList.toggle('hidden');
+  addForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    await dbAdd('livestock', {
+      tankId: activeTankId, name:f.get('name'), species:f.get('species')||'',
+      category: categoryField ? f.get('category') : kind,
+      qty:Number(f.get('qty'))||1, addedDate:f.get('addedDate')||todayISO(), notes:'', photoUrl:f.get('photoUrl')||''
+    });
+    render();
+  };
+  $$('[data-del-stock]', card).forEach(b => b.onclick = async () => { await dbDelete('livestock', b.dataset.delStock); render(); });
+  $$('[data-qty-inc]', card).forEach(b => b.onclick = async () => {
+    const item = items.find(s => s.id === b.dataset.qtyInc);
+    await dbUpdate('livestock', item.id, { qty: (Number(item.qty)||0) + 1 });
+    render();
+  });
+  $$('[data-qty-dec]', card).forEach(b => b.onclick = async () => {
+    const item = items.find(s => s.id === b.dataset.qtyDec);
+    await dbUpdate('livestock', item.id, { qty: Math.max(0, (Number(item.qty)||0) - 1) });
+    render();
+  });
+  $$('[data-edit-stock-btn]', card).forEach(b => b.onclick = () => { editingStockId = b.dataset.editStockBtn; render(); });
+  $$('[data-cancel-stock]', card).forEach(b => b.onclick = () => { editingStockId = null; render(); });
+  $$('[data-edit-stock]', card).forEach(f => f.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    await dbUpdate('livestock', f.dataset.editStock, {
+      name: fd.get('name'), species: fd.get('species')||'',
+      category: categoryField ? fd.get('category') : kind,
+      qty: Number(fd.get('qty'))||0, addedDate: fd.get('addedDate')||todayISO(), photoUrl: fd.get('photoUrl')||''
+    });
+    editingStockId = null;
+    render();
+  });
+}
+
+function renderAnimalCard(stock){
+  const animals = stock.filter(s => s.category !== 'plant');
+  renderStockSection({
+    cardId:'animalCard', kind:'fish', title:'Animals', items:animals, suggestions:SUGGESTED_ANIMALS,
+    defaultCategory:'fish', categoryField:true,
+  });
+}
+function renderPlantCard(stock){
+  const plants = stock.filter(s => s.category === 'plant');
+  renderStockSection({
+    cardId:'plantCard', kind:'plant', title:'Plants', items:plants, suggestions:SUGGESTED_PLANTS,
+    defaultCategory:'plant', categoryField:false,
+  });
+}
+
+/* ---- feeding: foods (colored, per-tank), a monthly dot calendar, and per-day editable logs ---- */
+let editingFoodId = null;
+let addingFood = false;
+let feedCalendarMonth = null; // Date, first-of-month; initialized to current month on first render
+let feedSelectedDay = null;   // ISO date string
+let editingFeedingId = null;
+
+function colorSwatchesHtml(selected, name){
+  return `<div class="color-swatch-picker">${FOOD_COLORS.map(c => `
+    <button type="button" class="color-swatch ${c===selected?'selected':''}" data-color="${c}" style="background:${c}" title="${c}"></button>
+  `).join('')}<input type="hidden" name="${name}" value="${selected||FOOD_COLORS[0]}"></div>`;
+}
+
+function renderFeedCard(feed, stock, foods){
+  const card = $('#feedCard');
+  if(!feedCalendarMonth){ const n = new Date(); feedCalendarMonth = new Date(n.getFullYear(), n.getMonth(), 1); }
+  if(!feedSelectedDay) feedSelectedDay = todayISO();
+  const animals = stock.filter(s => s.category !== 'plant');
+  const foodsById = Object.fromEntries(foods.map(f => [f.id, f]));
+  const animalsById = Object.fromEntries(animals.map(a => [a.id, a]));
+
+  // group feed entries by date
+  const byDate = {};
+  feed.forEach(f => { (byDate[f.date] = byDate[f.date] || []).push(f); });
+
+  const year = feedCalendarMonth.getFullYear(), month = feedCalendarMonth.getMonth();
+  const monthLabel = feedCalendarMonth.toLocaleDateString(undefined, { month:'long', year:'numeric' });
+  const firstDow = new Date(year, month, 1).getDay();
+  const totalDays = new Date(year, month+1, 0).getDate();
+  const cells = [];
+  for(let i=0;i<firstDow;i++) cells.push(null);
+  for(let d=1; d<=totalDays; d++) cells.push(d);
+
+  function dotStyleFor(dateStr){
+    const entries = byDate[dateStr];
+    if(!entries || !entries.length) return null;
+    const foodIds = [...new Set(entries.map(e => e.foodId).filter(Boolean))];
+    const colors = foodIds.map(id => foodsById[id]?.color || 'var(--ink-faint)');
+    if(!colors.length) return 'background:var(--ink-faint);';
+    if(colors.length === 1) return `background:${colors[0]};`;
+    const slice = 100/colors.length;
+    const stops = colors.map((c,i) => `${c} ${(i*slice).toFixed(1)}% ${((i+1)*slice).toFixed(1)}%`).join(', ');
+    return `background: conic-gradient(${stops});`;
+  }
+
+  const calendarCells = cells.map(d => {
+    if(d===null) return `<div class="calendar-cell pad"></div>`;
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayISO();
+    const isSelected = dateStr === feedSelectedDay;
+    const dotStyle = dotStyleFor(dateStr);
+    return `<div class="calendar-cell ${isToday?'today':''} ${isSelected?'selected':''}" data-day="${dateStr}">
+      <span class="daynum">${d}</span>
+      <span class="feed-dot ${dotStyle?'':'no-feed'}" style="${dotStyle||''}"></span>
+    </div>`;
+  }).join('');
+
+  const dayEntries = byDate[feedSelectedDay] || [];
+  const selectedLabel = new Date(feedSelectedDay+'T00:00:00').toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+
+  card.innerHTML = `
+    <div class="card-head">
+      <div><h2>Feeding log</h2><div class="sub">${feed.length} entr${feed.length===1?'y':'ies'} logged</div></div>
+      <button class="btn btn-sm" id="toggleFeedForm">+ Log a feeding</button>
+    </div>
+
+    <div class="foods-manager">
+      <div class="foods-manager-label">Foods you use</div>
+      <div class="food-chip-list">
+        ${foods.length ? foods.map(fd => `
+          <span class="food-chip"><i style="background:${fd.color}"></i>${esc(fd.name)}
+            <button type="button" data-edit-food="${fd.id}" title="Edit">✎</button>
+            <button type="button" data-del-food="${fd.id}" title="Delete">✕</button>
+          </span>`).join('') : `<span class="muted-empty" style="padding:0;">No foods added yet — add one below.</span>`}
+      </div>
+      <button type="button" class="btn btn-sm" id="toggleFoodForm">${addingFood ? 'Cancel' : '+ Food'}</button>
+      <div id="foodFormArea"></div>
+    </div>
+
+    <div class="feed-calendar">
+      <div class="calendar-nav">
+        <button type="button" id="calPrev">‹</button>
+        <span class="month-label">${monthLabel}</span>
+        <button type="button" id="calNext">›</button>
+      </div>
+      <div class="calendar-grid">
+        ${['S','M','T','W','T','F','S'].map(d=>`<div class="calendar-dow">${d}</div>`).join('')}
+        ${calendarCells}
+      </div>
+    </div>
+
+    <div class="feed-day-detail">
+      <div class="feed-day-title">${selectedLabel}</div>
+      ${dayEntries.length ? dayEntries.map(f => f.id === editingFeedingId ? `
+        <form class="feed-entry-edit-row" data-edit-feed="${f.id}">
+          <select name="foodId">${foods.map(fd=>`<option value="${fd.id}" ${fd.id===f.foodId?'selected':''}>${esc(fd.name)}</option>`).join('')}</select>
+          <select name="animalId"><option value="">General / whole tank</option>${animals.map(a=>`<option value="${a.id}" ${a.id===f.animalId?'selected':''}>${esc(a.name)}</option>`).join('')}</select>
+          <input type="text" name="notes" value="${esc(f.notes||'')}" placeholder="notes">
+          <button type="submit" class="btn btn-primary btn-sm">Save</button>
+          <button type="button" class="btn btn-sm" data-cancel-feed>Cancel</button>
+        </form>
+      ` : `
+        <div class="feed-entry-row">
+          <i style="background:${foodsById[f.foodId]?.color || 'var(--ink-faint)'}"></i>
+          <span class="fname">${esc(foodsById[f.foodId]?.name || 'Unknown food')}</span>
+          ${f.animalId && animalsById[f.animalId] ? `<span class="ftarget">for ${esc(animalsById[f.animalId].name)}</span>` : ''}
+          <span class="fnotes">${esc(f.notes||'')}</span>
+          <button class="btn-ghost btn-sm" data-edit-feed-btn="${f.id}" title="Edit">✎</button>
+          <button class="btn-ghost" data-del-feed="${f.id}" title="Delete">✕</button>
+        </div>`).join('') : `<div class="muted-empty">No feedings logged this day.</div>`}
+    </div>
+
+    <form class="inline-form hidden" id="feedForm">
+      <div class="field"><label>Date</label><input type="date" name="date" value="${feedSelectedDay}" required></div>
+      <div class="field grow" style="flex-basis:100%;">
+        <label>Foods fed (check all that apply)</label>
+        ${foods.length ? foods.map(fd => `
+          <div class="food-check-row">
+            <label><input type="checkbox" name="food-${fd.id}" value="1"><i style="background:${fd.color}"></i>${esc(fd.name)}</label>
+            <select name="animal-${fd.id}"><option value="">General / whole tank</option>${animals.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}</select>
+          </div>`).join('') : `<div class="muted-empty">Add a food above first.</div>`}
+      </div>
+      <div class="field grow"><label>Notes</label><input type="text" name="notes" placeholder="optional, applies to this log"></div>
+      <div class="form-actions"><button type="submit" class="btn btn-primary btn-sm" ${foods.length?'':'disabled'}>Log</button></div>
+    </form>
+  `;
+
+  $('#calPrev').onclick = () => { feedCalendarMonth = new Date(year, month-1, 1); render(); };
+  $('#calNext').onclick = () => { feedCalendarMonth = new Date(year, month+1, 1); render(); };
+  $$('.calendar-cell[data-day]', card).forEach(cell => cell.onclick = () => { feedSelectedDay = cell.dataset.day; editingFeedingId=null; render(); });
+
+  $('#toggleFeedForm').onclick = () => $('#feedForm').classList.toggle('hidden');
+  $('#feedForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const date = f.get('date') || feedSelectedDay;
+    const notes = f.get('notes') || '';
+    const picks = foods.filter(fd => f.get('food-'+fd.id));
+    for(const fd of picks){
+      await dbAdd('feeding', { tankId: activeTankId, date, foodId: fd.id, animalId: f.get('animal-'+fd.id) || '', notes });
+    }
+    render();
+  };
+  $$('[data-del-feed]', card).forEach(b => b.onclick = async () => { await dbDelete('feeding', b.dataset.delFeed); render(); });
+  $$('[data-edit-feed-btn]', card).forEach(b => b.onclick = () => { editingFeedingId = b.dataset.editFeedBtn; render(); });
+  $$('[data-cancel-feed]', card).forEach(b => b.onclick = () => { editingFeedingId = null; render(); });
+  $$('[data-edit-feed]', card).forEach(fEl => fEl.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    await dbUpdate('feeding', fEl.dataset.editFeed, { foodId: fd.get('foodId'), animalId: fd.get('animalId')||'', notes: fd.get('notes')||'' });
+    editingFeedingId = null;
+    render();
+  });
+
+  /* foods manager wiring */
+  $('#toggleFoodForm').onclick = () => { addingFood = !addingFood; editingFoodId = null; render(); };
+  if(addingFood){
+    $('#foodFormArea').innerHTML = `
+      <div class="food-form" data-new-food>
+        <input type="text" name="name" placeholder="e.g. Frozen bloodworms" required>
+        ${colorSwatchesHtml(FOOD_COLORS[foods.length % FOOD_COLORS.length], 'color')}
+        <button type="button" class="btn btn-primary btn-sm" data-save-new-food>Save</button>
+      </div>`;
+    wireColorSwatches($('#foodFormArea'));
+    $('#foodFormArea [data-save-new-food]').onclick = async () => {
+      const wrap = $('#foodFormArea [data-new-food]');
+      const name = wrap.querySelector('[name="name"]').value.trim();
+      if(!name) return;
+      const color = wrap.querySelector('[name="color"]').value;
+      await dbAdd('foods', { tankId: activeTankId, name, color });
+      addingFood = false;
+      render();
+    };
+  }
+  $$('[data-edit-food]', card).forEach(b => b.onclick = () => { editingFoodId = b.dataset.editFood; addingFood=false; render(); });
+  $$('[data-del-food]', card).forEach(b => b.onclick = async () => { await dbDelete('foods', b.dataset.delFood); render(); });
+  if(editingFoodId){
+    const fd = foods.find(x => x.id === editingFoodId);
+    if(fd){
+      const chipList = $('.food-chip-list', card);
+      chipList.insertAdjacentHTML('afterend', `
+        <div class="food-form" data-edit-food-form>
+          <input type="text" name="name" value="${esc(fd.name)}" required>
+          ${colorSwatchesHtml(fd.color, 'color')}
+          <button type="button" class="btn btn-primary btn-sm" data-save-edit-food>Save</button>
+          <button type="button" class="btn btn-sm" data-cancel-edit-food>Cancel</button>
+        </div>`);
+      wireColorSwatches(card.querySelector('[data-edit-food-form]'));
+      card.querySelector('[data-save-edit-food]').onclick = async () => {
+        const wrap = card.querySelector('[data-edit-food-form]');
+        const name = wrap.querySelector('[name="name"]').value.trim();
+        if(!name) return;
+        const color = wrap.querySelector('[name="color"]').value;
+        await dbUpdate('foods', editingFoodId, { name, color });
+        editingFoodId = null;
+        render();
+      };
+      card.querySelector('[data-cancel-edit-food]').onclick = () => { editingFoodId = null; render(); };
+    }
+  }
+}
+function wireColorSwatches(scope){
+  $$('.color-swatch', scope).forEach(sw => sw.onclick = () => {
+    $$('.color-swatch', scope).forEach(x => x.classList.remove('selected'));
+    sw.classList.add('selected');
+    scope.querySelector('input[type="hidden"]').value = sw.dataset.color;
+  });
+}
+
+/* ---- expenses ---- */
+let editingExpenseId = null;
+const EXPENSE_CATEGORY_OPTIONS = (selected) => Object.entries(EXPENSE_CATEGORY_LABEL)
+  .map(([v,label]) => `<option value="${v}" ${v===selected?'selected':''}>${label}</option>`).join('');
+
+function renderExpenseCard(expenses){
+  const card = $('#expenseCard');
+  const total = expenses.reduce((n,x)=>n+(Number(x.amount)||0),0);
+  card.innerHTML = `
+    <div class="card-head">
+      <div><h2>Expenses</h2><div class="sub">${expenses.length} entr${expenses.length===1?'y':'ies'} · $${total.toFixed(2)} total</div></div>
+      <button class="btn btn-sm" id="toggleExpenseForm">+ Log</button>
+    </div>
+    <form class="inline-form hidden" id="expenseForm">
+      <div class="field"><label>Date</label><input type="date" name="date" value="${todayISO()}" required></div>
+      <div class="field"><label>Category</label>
+        <select name="category">${EXPENSE_CATEGORY_OPTIONS('equipment')}</select>
+      </div>
+      <div class="field"><label>Amount ($)</label><input class="mono" type="number" step="0.01" min="0" name="amount" required></div>
+      <div class="field grow"><label>Notes</label><input type="text" name="notes" placeholder="what for?"></div>
+      <div class="form-actions"><button type="submit" class="btn btn-primary btn-sm">Log</button></div>
+    </form>
+    <div class="expense-list" style="margin-top:12px">
+      ${expenses.length ? expenses.map(x => x.id === editingExpenseId ? `
+        <form class="expense-edit-row" data-edit-expense="${x.id}">
+          <input type="date" name="date" value="${x.date}" required>
+          <select name="category">${EXPENSE_CATEGORY_OPTIONS(x.category)}</select>
+          <input class="mono" type="number" step="0.01" min="0" name="amount" value="${x.amount}" required>
+          <input type="text" name="notes" value="${esc(x.notes||'')}" placeholder="what for?">
+          <button type="submit" class="btn btn-primary btn-sm">Save</button>
+          <button type="button" class="btn btn-sm" data-cancel-expense>Cancel</button>
+        </form>
+      ` : `
+        <div class="expense-row">
+          <span class="date">${fmtDate(x.date)}</span>
+          <span class="what"><span class="expense-cat">${esc(EXPENSE_CATEGORY_LABEL[x.category]||x.category)}</span>${esc(x.notes||'')}</span>
+          <span class="amt">$${Number(x.amount).toFixed(2)}</span>
+          <button class="btn-ghost" data-edit-expense-btn="${x.id}" title="Edit">✎</button>
+          <button class="btn-ghost" data-del-expense="${x.id}" title="Delete">✕</button>
+        </div>`).join('') : `<div class="muted-empty">No expenses logged yet.</div>`}
+    </div>
+  `;
+  $('#toggleExpenseForm').onclick = () => $('#expenseForm').classList.toggle('hidden');
+  $('#expenseForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    await dbAdd('expenses', { tankId: activeTankId, date:f.get('date'), category:f.get('category'), amount:Number(f.get('amount'))||0, notes:f.get('notes')||'' });
+    render();
+  };
+  $$('[data-del-expense]', card).forEach(b => b.onclick = async () => { await dbDelete('expenses', b.dataset.delExpense); render(); });
+  $$('[data-edit-expense-btn]', card).forEach(b => b.onclick = () => { editingExpenseId = b.dataset.editExpenseBtn; render(); });
+  $$('[data-cancel-expense]', card).forEach(b => b.onclick = () => { editingExpenseId = null; render(); });
+  $$('[data-edit-expense]', card).forEach(f => f.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    await dbUpdate('expenses', f.dataset.editExpense, {
+      date: fd.get('date'), category: fd.get('category'), amount: Number(fd.get('amount'))||0, notes: fd.get('notes')||''
+    });
+    editingExpenseId = null;
+    render();
+  });
+}
+
+/* ---- water treatments / chemicals (so you can see what's already been dosed before adding more) ---- */
+const SUGGESTED_TREATMENTS = [
+  'Seachem Prime','API Stress Coat','API Quick Start','Seachem Stability',"Fritz Zyme 7",
+  'Seachem Excel (liquid carbon)','Flourish (liquid fertilizer)','API General Cure','Ich-X',
+  'API Melafix','API Pimafix','Aquarium Salt','Seachem Equilibrium','Kanaplex','Activated Carbon (e.g. AquaClear)',
+  'Seachem Purigen','API Algaefix',
+];
+let editingTreatmentId = null;
+
+function renderTreatmentCard(treatments){
+  const card = $('#treatmentCard');
+  card.innerHTML = `
+    <div class="card-head">
+      <div><h2>Treatments &amp; chemicals</h2><div class="sub">${treatments.length} entr${treatments.length===1?'y':'ies'}</div></div>
+      <button class="btn btn-sm" id="toggleTreatmentForm">+ Log</button>
+    </div>
+    <div class="treatment-note">Log what you dose here so you can see at a glance what's already in the water before adding something else — stacking treatments (e.g. carbon-removers with medications, or multiple dechlorinators) can cancel each other out or overload the tank.</div>
+    <datalist id="treatmentDatalist">${SUGGESTED_TREATMENTS.map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+    <form class="inline-form hidden" id="treatmentForm">
+      <div class="field"><label>Date</label><input type="date" name="date" value="${todayISO()}" required></div>
+      <div class="field grow"><label>Product</label><input type="text" name="product" list="treatmentDatalist" placeholder="e.g. AquaClear activated carbon" required></div>
+      <div class="field"><label>Amount / dose</label><input type="text" name="amount" placeholder="e.g. 5 mL"></div>
+      <div class="field grow"><label>Notes</label><input type="text" name="notes" placeholder="optional"></div>
+      <div class="form-actions"><button type="submit" class="btn btn-primary btn-sm">Log</button></div>
+    </form>
+    <div class="treatment-list" style="margin-top:12px">
+      ${treatments.length ? treatments.map(x => x.id === editingTreatmentId ? `
+        <form class="expense-edit-row" data-edit-treatment="${x.id}">
+          <input type="date" name="date" value="${x.date}" required>
+          <input type="text" name="product" value="${esc(x.product)}" list="treatmentDatalist" required>
+          <input type="text" name="amount" value="${esc(x.amount||'')}" placeholder="amount">
+          <input type="text" name="notes" value="${esc(x.notes||'')}" placeholder="notes">
+          <button type="submit" class="btn btn-primary btn-sm">Save</button>
+          <button type="button" class="btn btn-sm" data-cancel-treatment>Cancel</button>
+        </form>
+      ` : `
+        <div class="treatment-row">
+          <span class="date">${fmtDate(x.date)}</span>
+          <span class="what">${esc(x.product)}${daysBetween(x.date, todayISO())<=7 ? '<span class="recent-pill">recent</span>' : ''}${x.notes?' — '+esc(x.notes):''}</span>
+          <span class="amt">${esc(x.amount||'')}</span>
+          <button class="btn-ghost" data-edit-treatment-btn="${x.id}" title="Edit">✎</button>
+          <button class="btn-ghost" data-del-treatment="${x.id}" title="Delete">✕</button>
+        </div>`).join('') : `<div class="muted-empty">Nothing logged yet.</div>`}
+    </div>
+  `;
+  $('#toggleTreatmentForm').onclick = () => $('#treatmentForm').classList.toggle('hidden');
+  $('#treatmentForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    await dbAdd('treatments', { tankId: activeTankId, date:f.get('date'), product:f.get('product'), amount:f.get('amount')||'', notes:f.get('notes')||'' });
+    render();
+  };
+  $$('[data-del-treatment]', card).forEach(b => b.onclick = async () => { await dbDelete('treatments', b.dataset.delTreatment); render(); });
+  $$('[data-edit-treatment-btn]', card).forEach(b => b.onclick = () => { editingTreatmentId = b.dataset.editTreatmentBtn; render(); });
+  $$('[data-cancel-treatment]', card).forEach(b => b.onclick = () => { editingTreatmentId = null; render(); });
+  $$('[data-edit-treatment]', card).forEach(f => f.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    await dbUpdate('treatments', f.dataset.editTreatment, { date:fd.get('date'), product:fd.get('product'), amount:fd.get('amount')||'', notes:fd.get('notes')||'' });
+    editingTreatmentId = null;
+    render();
+  });
+}
+
+/* ---- add tank (modal — native prompt()/confirm() don't fire inside the artifact frame) ---- */
+function openTankForm(){
+  $('#tankModalForm').reset();
+  $('#tankModalOverlay').classList.remove('hidden');
+  $('#tankModalForm').querySelector('[name="name"]').focus();
+}
+function closeTankForm(){
+  $('#tankModalOverlay').classList.add('hidden');
+}
+$('#tankModalCancel').onclick = closeTankForm;
+$('#tankModalOverlay').onclick = (e) => { if(e.target.id === 'tankModalOverlay') closeTankForm(); };
+$('#tankModalForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const name = (f.get('name')||'').trim();
+  if(!name) return;
+  const gallons = Number(f.get('gallons')) || 0;
+  const type = (f.get('type')||'').trim() || 'Freshwater';
+  const isQuarantine = f.get('isQuarantine') === 'on';
+  const id = await dbAdd('tanks', { name, gallons, type, startDate: todayISO(), isExample:false, isQuarantine });
+  activeTankId = id;
+  closeTankForm();
+  render();
+};
+
+/* ---- ppm / mg/L converter ---- */
+(function initConverter(){
+  let direction = 'ppm-to-mgl'; // or 'mgl-to-ppm'
+  let sg = 1.000;
+
+  const fromInput = $('#convFromInput');
+  const toInput = $('#convToInput');
+  const fromLabel = $('#convFromLabel');
+  const toLabel = $('#convToLabel');
+  const resultText = $('#convResultText');
+  const customField = $('#customSgField');
+  const customInput = $('#customSgInput');
+
+  function labels(){
+    fromLabel.textContent = direction === 'ppm-to-mgl' ? 'ppm' : 'mg/L';
+    toLabel.textContent = direction === 'ppm-to-mgl' ? 'mg/L' : 'ppm';
+  }
+  function compute(){
+    const val = Number(fromInput.value);
+    if(fromInput.value === '' || Number.isNaN(val)){ toInput.value=''; resultText.textContent = `— ${direction==='ppm-to-mgl'?'ppm':'mg/L'} = — ${direction==='ppm-to-mgl'?'mg/L':'ppm'}`; return; }
+    // mg/L = ppm * density(kg/L); ppm = mg/L / density
+    const result = direction === 'ppm-to-mgl' ? val * sg : val / sg;
+    const resultRounded = Math.round(result * 10000) / 10000;
+    toInput.value = resultRounded;
+    resultText.textContent = direction === 'ppm-to-mgl'
+      ? `${val} ppm = ${resultRounded} mg/L`
+      : `${val} mg/L = ${resultRounded} ppm`;
+  }
+  fromInput.oninput = compute;
+  $('#convSwap').onclick = () => {
+    direction = direction === 'ppm-to-mgl' ? 'mgl-to-ppm' : 'ppm-to-mgl';
+    labels();
+    fromInput.value = toInput.value;
+    compute();
+  };
+  $$('#densityPresets button').forEach(b => b.onclick = () => {
+    $$('#densityPresets button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    if(b.dataset.sg === 'custom'){
+      customField.style.display = '';
+      sg = Number(customInput.value) || 1.000;
+    } else {
+      customField.style.display = 'none';
+      sg = Number(b.dataset.sg);
+    }
+    compute();
+  });
+  customInput.oninput = () => { sg = Number(customInput.value) || 1.000; compute(); };
+
+  $('#converterBtn').onclick = () => {
+    labels(); compute();
+    $('#converterModalOverlay').classList.remove('hidden');
+    fromInput.focus();
+  };
+  $('#converterClose').onclick = () => $('#converterModalOverlay').classList.add('hidden');
+  $('#converterModalOverlay').onclick = (e) => { if(e.target.id === 'converterModalOverlay') $('#converterModalOverlay').classList.add('hidden'); };
+})();
+
+/* ---- theme toggle: light / dark, persisted per-viewer ---- */
+(function(){
+  const root = document.documentElement;
+  const btn = $('#themeToggle');
+  let saved = null;
+  try{ saved = localStorage.getItem('aquariumlog-theme'); }catch(err){}
+  function apply(mode){
+    if(mode === 'dark' || mode === 'light'){ root.setAttribute('data-theme', mode); }
+    else { root.removeAttribute('data-theme'); }
+    const isDark = mode === 'dark' || (mode !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if(btn) btn.textContent = isDark ? '☀️' : '🌙';
+  }
+  apply(saved);
+  if(btn) btn.onclick = () => {
+    const current = root.getAttribute('data-theme') ||
+      (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = current === 'dark' ? 'light' : 'dark';
+    apply(next);
+    try{ localStorage.setItem('aquariumlog-theme', next); }catch(err){}
+  };
+})();
+
+initAuth();
+})();
+</script>
+</body>
+</html>

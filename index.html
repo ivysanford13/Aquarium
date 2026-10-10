@@ -109,6 +109,35 @@ header{
 .wordmark svg{ flex:none; }
 .wordmark .name{ font-size:1.28rem; font-weight:600; }
 .wordmark .tagline{ font-size:.78rem; color:var(--ink-faint); font-family:'Work Sans'; }
+[hidden]{ display:none !important; }
+.header-inner{ flex-wrap:nowrap; }
+.menu-wrap{ position:relative; flex:none; }
+.menu-btn{ display:inline-flex; align-items:center; justify-content:center; padding:7px 10px; }
+.menu-panel{
+  position:absolute; right:0; top:calc(100% + 8px); z-index:30;
+  width:min(300px, calc(100vw - 32px)); max-height:calc(100vh - 100px); overflow-y:auto;
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  box-shadow:var(--shadow); padding:6px;
+}
+.menu-panel.hidden{ display:none; }
+.menu-label{ font-size:.68rem; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-faint); padding:8px 10px 4px; }
+.menu-sep{ height:1px; background:var(--line); margin:6px 4px; }
+.menu-item{
+  display:flex; align-items:center; gap:8px; width:100%; text-align:left;
+  border:none; background:none; color:var(--ink); font:inherit; font-size:.88rem;
+  padding:9px 10px; border-radius:8px; cursor:pointer;
+}
+.menu-item:hover{ background:var(--surface-2); }
+.menu-account{ padding:6px 10px; font-size:.78rem; color:var(--ink-faint); word-break:break-all; }
+.menu-tank-row{ display:flex; align-items:center; gap:2px; }
+.menu-tank{ flex:1; min-width:0; }
+.menu-tank.active{ background:var(--teal-soft); font-weight:600; }
+.menu-tank .tname{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.menu-tank-del{
+  border:none; background:none; color:var(--ink-faint); cursor:pointer; font-size:.8rem;
+  width:30px; height:30px; border-radius:8px; flex:none;
+}
+.menu-tank-del:hover{ background:var(--critical-soft); color:var(--critical); }
 
 .tank-tabs{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
 .tank-tab{
@@ -134,6 +163,9 @@ header{
 }
 .tank-tab-wrap:hover .tank-tab-del{ opacity:1; }
 .tank-tab-del:hover{ background:var(--critical); color:#fff; box-shadow:0 0 0 1px var(--critical); }
+.tank-title-row{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:0 0 14px; font-size:.82rem; }
+.tank-title{ font-size:1.5rem; font-weight:600; margin:0; }
+.stack{ display:flex; flex-direction:column; gap:20px; }
 .link-btn{
   border:none; background:none; padding:0; font:inherit; color:var(--warn); text-decoration:underline;
   cursor:pointer;
@@ -191,7 +223,7 @@ main{ max-width:1180px; margin:0 auto; padding:28px 24px 80px; }
   background:var(--surface); border:1px solid var(--line); border-radius:14px;
   padding:20px 22px; box-shadow:var(--shadow);
 }
-.card-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.card-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
 .card-head h2{ font-size:1.15rem; margin:0; font-weight:600; }
 .card-head .sub{ font-size:.78rem; color:var(--ink-faint); }
 
@@ -466,14 +498,23 @@ body.auth-pending header, body.auth-pending main{ visibility:hidden; }
         <circle cx="8" cy="13.4" r="1.1" fill="var(--paper)"/>
       </svg>
       <span class="name">Aquarium Log</span>
-      <span class="tagline">water tests · upkeep · livestock</span>
     </div>
-    <div class="tank-tabs" id="tankTabs"></div>
-    <span class="account-email" id="accountEmail" hidden></span>
-    <button class="btn btn-sm" id="signOutBtn" hidden>Sign out</button>
-    <button class="btn btn-sm" id="themeToggle" title="Toggle light / dark">🌙</button>
-    <button class="btn btn-sm" id="converterBtn">⇄ ppm / mg/L</button>
-    <button class="btn btn-sm" id="addTankBtn">+ Tank</button>
+    <div class="menu-wrap">
+      <button type="button" class="btn btn-sm menu-btn" id="menuBtn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg>
+      </button>
+      <div class="menu-panel hidden" id="menuPanel" role="menu">
+        <div class="menu-label">Tanks</div>
+        <div id="tankTabs"></div>
+        <button type="button" class="menu-item" id="addTankBtn" role="menuitem">+ Add a tank</button>
+        <div class="menu-sep"></div>
+        <button type="button" class="menu-item" id="converterBtn" role="menuitem">⇄ ppm / mg/L converter</button>
+        <button type="button" class="menu-item" id="themeToggle" role="menuitem">Dark mode</button>
+        <div class="menu-sep"></div>
+        <div class="menu-account account-email" id="accountEmail" hidden></div>
+        <button type="button" class="menu-item" id="signOutBtn" role="menuitem" hidden>Sign out</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -506,15 +547,15 @@ body.auth-pending header, body.auth-pending main{ visibility:hidden; }
 
 <div class="modal-overlay hidden" id="tankModalOverlay">
   <form class="modal-card" id="tankModalForm">
-    <h2>New tank</h2>
-    <div class="modal-sub">Add another tank to track separately.</div>
+    <h2 id="tankModalTitle">New tank</h2>
+    <div class="modal-sub" id="tankModalSub">Add another tank to track separately.</div>
     <div class="modal-field"><label>Name</label><input type="text" name="name" placeholder="e.g. 20-gallon shrimp tank" required></div>
     <div class="modal-field"><label>Volume (gallons)</label><input class="mono" type="number" min="0" step="0.5" name="gallons" placeholder="20" required></div>
     <div class="modal-field"><label>Type</label><input type="text" name="type" placeholder="e.g. Freshwater, planted / Saltwater reef" required></div>
     <label class="modal-check"><input type="checkbox" name="isQuarantine"> This is a quarantine (QT) tank</label>
     <div class="modal-actions">
       <button type="button" class="btn btn-sm" id="tankModalCancel">Cancel</button>
-      <button type="submit" class="btn btn-primary btn-sm">Add tank</button>
+      <button type="submit" class="btn btn-primary btn-sm" id="tankModalSubmit">Add tank</button>
     </div>
   </form>
 </div>
@@ -823,7 +864,7 @@ function friendlyAuthError(e){
   if(code.includes('invalid-email')) return 'That email address doesn\'t look right.';
   return e?.message || 'Something went wrong — try again.';
 }
-$('#signOutBtn').onclick = async () => { await waitForFb(); await window.__fb.signOutUser(); };
+$('#signOutBtn').onclick = async () => { closeMenu(); await waitForFb(); await window.__fb.signOutUser(); };
 
 /* ---------------- derived ---------------- */
 function tankData(tankId){
@@ -864,9 +905,8 @@ function render(){
     return;
   }
   if(!activeTankId || !state.tanks.find(t=>t.id===activeTankId)) activeTankId = state.tanks[0].id;
-  const { tank, tests, stock, tasks, foods, feed, expenses, treatments } = tankData(activeTankId);
+  const { tank, tests, stock, expenses } = tankData(activeTankId);
 
-  const overdue = tasks.filter(t => daysBetween(todayISO(), nextDue(t)) < 0).length;
   const latest = tests[tests.length-1];
   const ageDays = daysBetween(tank.startDate, todayISO());
   const totalSpent = expenses.reduce((n,x)=>n+(Number(x.amount)||0),0);
@@ -874,51 +914,61 @@ function render(){
   main.innerHTML = `
     ${tank.isExample ? `<div class="example-banner"><span>🐟</span><span><strong>Example tank</strong> — this is sample data so the log has something to show. Edit it, or <button type="button" class="link-btn" id="deleteExampleTankBtn">delete it</button> and add your own from the “+ Tank” button.</span></div>` : ''}
 
+    <div class="tank-title-row">
+      <h1 class="tank-title">${esc(tank.name)}${tank.isQuarantine ? '<span class="qt-badge">QT</span>' : ''}</h1>
+      <button type="button" class="link-btn" id="editTankBtn">✎ Rename or resize</button>
+    </div>
+
     <div class="summary-strip">
       <div class="stat"><div class="label">Running</div><div class="value">${ageDays}<span class="value unit"> days</span></div></div>
       <div class="stat"><div class="label">Volume</div><div class="value">${tank.gallons}<span class="value unit"> gal</span></div></div>
-      <div class="stat"><div class="label">Livestock</div><div class="value">${stock.reduce((n,s)=>n+(Number(s.qty)||1),0)}<span class="value unit"> animals/plants</span></div></div>
-      <div class="stat"><div class="label">Upkeep</div><div class="value" style="color:${overdue? 'var(--critical)':'var(--good)'}">${overdue ? overdue+' overdue' : 'On track'}</div></div>
+      <div class="stat"><div class="label">Livestock</div><div class="value">${stockTotal(stock)}<span class="value unit"> animals/plants</span></div></div>
       <div class="stat"><div class="label">Spent</div><div class="value mono">$${totalSpent.toFixed(2)}</div></div>
     </div>
 
-    <div class="grid">
-      <div class="col">
-        <div class="card" id="waterCard"></div>
-        <div class="card" id="expenseCard"></div>
-        <div class="card" id="treatmentCard"></div>
-      </div>
-      <div class="col">
-        <div class="card" id="taskCard"></div>
-        <div class="card" id="animalCard"></div>
-        <div class="card" id="plantCard"></div>
-        <div class="card" id="feedCard"></div>
-      </div>
+    <div class="stack">
+      <div class="card" id="waterCard"></div>
+      <div class="card" id="animalCard"></div>
+      <div class="card" id="plantCard"></div>
+      <div class="card" id="expenseCard"></div>
     </div>
   `;
 
+  $('#editTankBtn').onclick = () => openTankForm(tank.id);
   if(tank.isExample) $('#deleteExampleTankBtn').onclick = () => openDeleteTankConfirm(tank.id);
   renderWaterCard(tests);
-  renderTaskCard(tasks);
   renderAnimalCard(stock);
   renderPlantCard(stock);
-  renderFeedCard(feed, stock, foods);
   renderExpenseCard(expenses);
-  renderTreatmentCard(treatments);
 }
 
 function renderTabs(){
   const wrap = $('#tankTabs');
   wrap.innerHTML = state.tanks.map(t => `
-    <span class="tank-tab-wrap">
-      <button class="tank-tab ${t.id===activeTankId?'active':''}" data-id="${t.id}">${esc(t.name)}${t.isQuarantine ? '<span class="qt-badge">QT</span>' : ''}</button>
-      <button type="button" class="tank-tab-del" data-del-tank="${t.id}" title="Delete this tank">✕</button>
-    </span>
+    <div class="menu-tank-row">
+      <button type="button" class="menu-item menu-tank ${t.id===activeTankId?'active':''}" role="menuitem" data-id="${t.id}">
+        <span class="tname">${esc(t.name)}</span>${t.isQuarantine ? '<span class="qt-badge">QT</span>' : ''}${t.id===activeTankId ? '<span aria-hidden="true">✓</span>' : ''}
+      </button>
+      <button type="button" class="menu-tank-del" data-del-tank="${t.id}" title="Delete this tank" aria-label="Delete ${esc(t.name)}">✕</button>
+    </div>
   `).join('');
-  $$('.tank-tab', wrap).forEach(btn => btn.onclick = () => { activeTankId = btn.dataset.id; render(); });
-  $$('[data-del-tank]', wrap).forEach(btn => btn.onclick = (e) => { e.stopPropagation(); openDeleteTankConfirm(btn.dataset.delTank); });
-  $('#addTankBtn').onclick = () => openTankForm();
+  $$('.menu-tank', wrap).forEach(btn => btn.onclick = () => { activeTankId = btn.dataset.id; closeMenu(); render(); });
+  $$('[data-del-tank]', wrap).forEach(btn => btn.onclick = (e) => { e.stopPropagation(); closeMenu(); openDeleteTankConfirm(btn.dataset.delTank); });
+  $('#addTankBtn').onclick = () => { closeMenu(); openTankForm(); };
 }
+
+/* ---- header dropdown menu ---- */
+function closeMenu(){
+  $('#menuPanel').classList.add('hidden');
+  $('#menuBtn').setAttribute('aria-expanded','false');
+}
+$('#menuBtn').onclick = (e) => {
+  e.stopPropagation();
+  const open = $('#menuPanel').classList.toggle('hidden') === false;
+  $('#menuBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+};
+document.addEventListener('click', (e) => { if(!e.target.closest('.menu-wrap')) closeMenu(); });
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenu(); });
 
 /* ---- delete tank (and everything under it) ---- */
 let pendingDeleteTankId = null;
@@ -1237,50 +1287,6 @@ function setupChartScrubber(tests){
   svg.addEventListener('pointerleave', () => { clearGuide(); panel.classList.add('hidden'); panel.innerHTML=''; });
 }
 
-/* ---- maintenance ---- */
-function renderTaskCard(tasks){
-  const card = $('#taskCard');
-  card.innerHTML = `
-    <div class="card-head">
-      <div><h2>Upkeep</h2><div class="sub">${tasks.length} recurring task${tasks.length===1?'':'s'}</div></div>
-      <button class="btn btn-sm" id="toggleTaskForm">+ Task</button>
-    </div>
-    <div class="task-list">
-      ${tasks.length ? tasks.map(t => {
-        const status = dueStatus(t);
-        return `<div class="task-row">
-          <div class="info">
-            <div class="name">${esc(t.label)}</div>
-            <div class="meta">every ${t.intervalDays}d · last done ${fmtDate(t.lastDone)}${t.notes ? ' · '+esc(t.notes) : ''}</div>
-          </div>
-          <span class="pill ${status.cls}">${status.text}</span>
-          <button class="btn btn-sm" data-done="${t.id}">Done</button>
-          <button class="btn-ghost" data-del-task="${t.id}" title="Delete">✕</button>
-        </div>`;
-      }).join('') : `<div class="muted-empty">No recurring tasks yet.</div>`}
-    </div>
-    <form class="inline-form hidden" id="taskForm">
-      <div class="field grow"><label>Task</label><input type="text" name="label" placeholder="e.g. 20% water change" required></div>
-      <div class="field"><label>Every (days)</label><input class="mono" type="number" min="1" name="intervalDays" value="7" required></div>
-      <div class="field"><label>Last done</label><input type="date" name="lastDone" value="${todayISO()}" required></div>
-      <div class="field grow"><label>Notes</label><input type="text" name="notes" placeholder="optional"></div>
-      <div class="form-actions"><button type="submit" class="btn btn-primary btn-sm">Add</button></div>
-    </form>
-  `;
-  $('#toggleTaskForm').onclick = () => $('#taskForm').classList.toggle('hidden');
-  $('#taskForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    await dbAdd('maintenance', {
-      tankId: activeTankId, label:f.get('label'), intervalDays:Number(f.get('intervalDays')),
-      lastDone:f.get('lastDone'), notes:f.get('notes')||''
-    });
-    render();
-  };
-  $$('[data-done]', card).forEach(b => b.onclick = async () => { await dbUpdate('maintenance', b.dataset.done, {lastDone: todayISO()}); render(); });
-  $$('[data-del-task]', card).forEach(b => b.onclick = async () => { await dbDelete('maintenance', b.dataset.delTask); render(); });
-}
-
 /* ---- livestock ---- */
 const CATEGORY_OPTIONS = (selected) => Object.entries(CATEGORY_LABEL)
   .map(([v,label]) => `<option value="${v}" ${v===selected?'selected':''}>${label}</option>`).join('');
@@ -1304,13 +1310,16 @@ const SUGGESTED_PLANTS = [
 ];
 
 let editingStockId = null;
+/* quantity of one livestock row; a blank qty counts as 1 */
+const stockQty = (s) => { const n = Number(s.qty); return (s.qty === '' || s.qty == null || !Number.isFinite(n)) ? 1 : n; };
+const stockTotal = (items) => items.reduce((n,s) => n + stockQty(s), 0);
 
 function renderStockSection({ cardId, kind, title, items, suggestions, defaultCategory, categoryField }){
   const card = $('#'+cardId);
   const listId = cardId + 'Datalist';
   card.innerHTML = `
     <div class="card-head">
-      <div><h2>${title}</h2><div class="sub">${items.length} entr${items.length===1?'y':'ies'}</div></div>
+      <div><h2>${title}</h2><div class="sub">${items.length} type${items.length===1?'':'s'} · ${stockTotal(items)} total</div></div>
       <button class="btn btn-sm" data-toggle-form>+ Add</button>
     </div>
     <datalist id="${listId}">${suggestions.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
@@ -1409,215 +1418,6 @@ function renderPlantCard(stock){
   });
 }
 
-/* ---- feeding: foods (colored, per-tank), a monthly dot calendar, and per-day editable logs ---- */
-let editingFoodId = null;
-let addingFood = false;
-let feedCalendarMonth = null; // Date, first-of-month; initialized to current month on first render
-let feedSelectedDay = null;   // ISO date string
-let editingFeedingId = null;
-
-function colorSwatchesHtml(selected, name){
-  return `<div class="color-swatch-picker">${FOOD_COLORS.map(c => `
-    <button type="button" class="color-swatch ${c===selected?'selected':''}" data-color="${c}" style="background:${c}" title="${c}"></button>
-  `).join('')}<input type="hidden" name="${name}" value="${selected||FOOD_COLORS[0]}"></div>`;
-}
-
-function renderFeedCard(feed, stock, foods){
-  const card = $('#feedCard');
-  if(!feedCalendarMonth){ const n = new Date(); feedCalendarMonth = new Date(n.getFullYear(), n.getMonth(), 1); }
-  if(!feedSelectedDay) feedSelectedDay = todayISO();
-  const animals = stock.filter(s => s.category !== 'plant');
-  const foodsById = Object.fromEntries(foods.map(f => [f.id, f]));
-  const animalsById = Object.fromEntries(animals.map(a => [a.id, a]));
-
-  // group feed entries by date
-  const byDate = {};
-  feed.forEach(f => { (byDate[f.date] = byDate[f.date] || []).push(f); });
-
-  const year = feedCalendarMonth.getFullYear(), month = feedCalendarMonth.getMonth();
-  const monthLabel = feedCalendarMonth.toLocaleDateString(undefined, { month:'long', year:'numeric' });
-  const firstDow = new Date(year, month, 1).getDay();
-  const totalDays = new Date(year, month+1, 0).getDate();
-  const cells = [];
-  for(let i=0;i<firstDow;i++) cells.push(null);
-  for(let d=1; d<=totalDays; d++) cells.push(d);
-
-  function dotStyleFor(dateStr){
-    const entries = byDate[dateStr];
-    if(!entries || !entries.length) return null;
-    const foodIds = [...new Set(entries.map(e => e.foodId).filter(Boolean))];
-    const colors = foodIds.map(id => foodsById[id]?.color || 'var(--ink-faint)');
-    if(!colors.length) return 'background:var(--ink-faint);';
-    if(colors.length === 1) return `background:${colors[0]};`;
-    const slice = 100/colors.length;
-    const stops = colors.map((c,i) => `${c} ${(i*slice).toFixed(1)}% ${((i+1)*slice).toFixed(1)}%`).join(', ');
-    return `background: conic-gradient(${stops});`;
-  }
-
-  const calendarCells = cells.map(d => {
-    if(d===null) return `<div class="calendar-cell pad"></div>`;
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = dateStr === todayISO();
-    const isSelected = dateStr === feedSelectedDay;
-    const dotStyle = dotStyleFor(dateStr);
-    return `<div class="calendar-cell ${isToday?'today':''} ${isSelected?'selected':''}" data-day="${dateStr}">
-      <span class="daynum">${d}</span>
-      <span class="feed-dot ${dotStyle?'':'no-feed'}" style="${dotStyle||''}"></span>
-    </div>`;
-  }).join('');
-
-  const dayEntries = byDate[feedSelectedDay] || [];
-  const selectedLabel = new Date(feedSelectedDay+'T00:00:00').toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
-
-  card.innerHTML = `
-    <div class="card-head">
-      <div><h2>Feeding log</h2><div class="sub">${feed.length} entr${feed.length===1?'y':'ies'} logged</div></div>
-      <button class="btn btn-sm" id="toggleFeedForm">+ Log a feeding</button>
-    </div>
-
-    <div class="foods-manager">
-      <div class="foods-manager-label">Foods you use</div>
-      <div class="food-chip-list">
-        ${foods.length ? foods.map(fd => `
-          <span class="food-chip"><i style="background:${fd.color}"></i>${esc(fd.name)}
-            <button type="button" data-edit-food="${fd.id}" title="Edit">✎</button>
-            <button type="button" data-del-food="${fd.id}" title="Delete">✕</button>
-          </span>`).join('') : `<span class="muted-empty" style="padding:0;">No foods added yet — add one below.</span>`}
-      </div>
-      <button type="button" class="btn btn-sm" id="toggleFoodForm">${addingFood ? 'Cancel' : '+ Food'}</button>
-      <div id="foodFormArea"></div>
-    </div>
-
-    <div class="feed-calendar">
-      <div class="calendar-nav">
-        <button type="button" id="calPrev">‹</button>
-        <span class="month-label">${monthLabel}</span>
-        <button type="button" id="calNext">›</button>
-      </div>
-      <div class="calendar-grid">
-        ${['S','M','T','W','T','F','S'].map(d=>`<div class="calendar-dow">${d}</div>`).join('')}
-        ${calendarCells}
-      </div>
-    </div>
-
-    <div class="feed-day-detail">
-      <div class="feed-day-title">${selectedLabel}</div>
-      ${dayEntries.length ? dayEntries.map(f => f.id === editingFeedingId ? `
-        <form class="feed-entry-edit-row" data-edit-feed="${f.id}">
-          <select name="foodId">${foods.map(fd=>`<option value="${fd.id}" ${fd.id===f.foodId?'selected':''}>${esc(fd.name)}</option>`).join('')}</select>
-          <select name="animalId"><option value="">General / whole tank</option>${animals.map(a=>`<option value="${a.id}" ${a.id===f.animalId?'selected':''}>${esc(a.name)}</option>`).join('')}</select>
-          <input type="text" name="notes" value="${esc(f.notes||'')}" placeholder="notes">
-          <button type="submit" class="btn btn-primary btn-sm">Save</button>
-          <button type="button" class="btn btn-sm" data-cancel-feed>Cancel</button>
-        </form>
-      ` : `
-        <div class="feed-entry-row">
-          <i style="background:${foodsById[f.foodId]?.color || 'var(--ink-faint)'}"></i>
-          <span class="fname">${esc(foodsById[f.foodId]?.name || 'Unknown food')}</span>
-          ${f.animalId && animalsById[f.animalId] ? `<span class="ftarget">for ${esc(animalsById[f.animalId].name)}</span>` : ''}
-          <span class="fnotes">${esc(f.notes||'')}</span>
-          <button class="btn-ghost btn-sm" data-edit-feed-btn="${f.id}" title="Edit">✎</button>
-          <button class="btn-ghost" data-del-feed="${f.id}" title="Delete">✕</button>
-        </div>`).join('') : `<div class="muted-empty">No feedings logged this day.</div>`}
-    </div>
-
-    <form class="inline-form hidden" id="feedForm">
-      <div class="field"><label>Date</label><input type="date" name="date" value="${feedSelectedDay}" required></div>
-      <div class="field grow" style="flex-basis:100%;">
-        <label>Foods fed (check all that apply)</label>
-        ${foods.length ? foods.map(fd => `
-          <div class="food-check-row">
-            <label><input type="checkbox" name="food-${fd.id}" value="1"><i style="background:${fd.color}"></i>${esc(fd.name)}</label>
-            <select name="animal-${fd.id}"><option value="">General / whole tank</option>${animals.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}</select>
-          </div>`).join('') : `<div class="muted-empty">Add a food above first.</div>`}
-      </div>
-      <div class="field grow"><label>Notes</label><input type="text" name="notes" placeholder="optional, applies to this log"></div>
-      <div class="form-actions"><button type="submit" class="btn btn-primary btn-sm" ${foods.length?'':'disabled'}>Log</button></div>
-    </form>
-  `;
-
-  $('#calPrev').onclick = () => { feedCalendarMonth = new Date(year, month-1, 1); render(); };
-  $('#calNext').onclick = () => { feedCalendarMonth = new Date(year, month+1, 1); render(); };
-  $$('.calendar-cell[data-day]', card).forEach(cell => cell.onclick = () => { feedSelectedDay = cell.dataset.day; editingFeedingId=null; render(); });
-
-  $('#toggleFeedForm').onclick = () => $('#feedForm').classList.toggle('hidden');
-  $('#feedForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    const date = f.get('date') || feedSelectedDay;
-    const notes = f.get('notes') || '';
-    const picks = foods.filter(fd => f.get('food-'+fd.id));
-    for(const fd of picks){
-      await dbAdd('feeding', { tankId: activeTankId, date, foodId: fd.id, animalId: f.get('animal-'+fd.id) || '', notes });
-    }
-    render();
-  };
-  $$('[data-del-feed]', card).forEach(b => b.onclick = async () => { await dbDelete('feeding', b.dataset.delFeed); render(); });
-  $$('[data-edit-feed-btn]', card).forEach(b => b.onclick = () => { editingFeedingId = b.dataset.editFeedBtn; render(); });
-  $$('[data-cancel-feed]', card).forEach(b => b.onclick = () => { editingFeedingId = null; render(); });
-  $$('[data-edit-feed]', card).forEach(fEl => fEl.onsubmit = async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    await dbUpdate('feeding', fEl.dataset.editFeed, { foodId: fd.get('foodId'), animalId: fd.get('animalId')||'', notes: fd.get('notes')||'' });
-    editingFeedingId = null;
-    render();
-  });
-
-  /* foods manager wiring */
-  $('#toggleFoodForm').onclick = () => { addingFood = !addingFood; editingFoodId = null; render(); };
-  if(addingFood){
-    $('#foodFormArea').innerHTML = `
-      <div class="food-form" data-new-food>
-        <input type="text" name="name" placeholder="e.g. Frozen bloodworms" required>
-        ${colorSwatchesHtml(FOOD_COLORS[foods.length % FOOD_COLORS.length], 'color')}
-        <button type="button" class="btn btn-primary btn-sm" data-save-new-food>Save</button>
-      </div>`;
-    wireColorSwatches($('#foodFormArea'));
-    $('#foodFormArea [data-save-new-food]').onclick = async () => {
-      const wrap = $('#foodFormArea [data-new-food]');
-      const name = wrap.querySelector('[name="name"]').value.trim();
-      if(!name) return;
-      const color = wrap.querySelector('[name="color"]').value;
-      await dbAdd('foods', { tankId: activeTankId, name, color });
-      addingFood = false;
-      render();
-    };
-  }
-  $$('[data-edit-food]', card).forEach(b => b.onclick = () => { editingFoodId = b.dataset.editFood; addingFood=false; render(); });
-  $$('[data-del-food]', card).forEach(b => b.onclick = async () => { await dbDelete('foods', b.dataset.delFood); render(); });
-  if(editingFoodId){
-    const fd = foods.find(x => x.id === editingFoodId);
-    if(fd){
-      const chipList = $('.food-chip-list', card);
-      chipList.insertAdjacentHTML('afterend', `
-        <div class="food-form" data-edit-food-form>
-          <input type="text" name="name" value="${esc(fd.name)}" required>
-          ${colorSwatchesHtml(fd.color, 'color')}
-          <button type="button" class="btn btn-primary btn-sm" data-save-edit-food>Save</button>
-          <button type="button" class="btn btn-sm" data-cancel-edit-food>Cancel</button>
-        </div>`);
-      wireColorSwatches(card.querySelector('[data-edit-food-form]'));
-      card.querySelector('[data-save-edit-food]').onclick = async () => {
-        const wrap = card.querySelector('[data-edit-food-form]');
-        const name = wrap.querySelector('[name="name"]').value.trim();
-        if(!name) return;
-        const color = wrap.querySelector('[name="color"]').value;
-        await dbUpdate('foods', editingFoodId, { name, color });
-        editingFoodId = null;
-        render();
-      };
-      card.querySelector('[data-cancel-edit-food]').onclick = () => { editingFoodId = null; render(); };
-    }
-  }
-}
-function wireColorSwatches(scope){
-  $$('.color-swatch', scope).forEach(sw => sw.onclick = () => {
-    $$('.color-swatch', scope).forEach(x => x.classList.remove('selected'));
-    sw.classList.add('selected');
-    scope.querySelector('input[type="hidden"]').value = sw.dataset.color;
-  });
-}
-
 /* ---- expenses ---- */
 let editingExpenseId = null;
 const EXPENSE_CATEGORY_OPTIONS = (selected) => Object.entries(EXPENSE_CATEGORY_LABEL)
@@ -1681,73 +1481,27 @@ function renderExpenseCard(expenses){
   });
 }
 
-/* ---- water treatments / chemicals (so you can see what's already been dosed before adding more) ---- */
-const SUGGESTED_TREATMENTS = [
-  'Seachem Prime','API Stress Coat','API Quick Start','Seachem Stability',"Fritz Zyme 7",
-  'Seachem Excel (liquid carbon)','Flourish (liquid fertilizer)','API General Cure','Ich-X',
-  'API Melafix','API Pimafix','Aquarium Salt','Seachem Equilibrium','Kanaplex','Activated Carbon (e.g. AquaClear)',
-  'Seachem Purigen','API Algaefix',
-];
-let editingTreatmentId = null;
-
-function renderTreatmentCard(treatments){
-  const card = $('#treatmentCard');
-  card.innerHTML = `
-    <div class="card-head">
-      <div><h2>Treatments &amp; chemicals</h2><div class="sub">${treatments.length} entr${treatments.length===1?'y':'ies'}</div></div>
-      <button class="btn btn-sm" id="toggleTreatmentForm">+ Log</button>
-    </div>
-    <div class="treatment-note">Log what you dose here so you can see at a glance what's already in the water before adding something else — stacking treatments (e.g. carbon-removers with medications, or multiple dechlorinators) can cancel each other out or overload the tank.</div>
-    <datalist id="treatmentDatalist">${SUGGESTED_TREATMENTS.map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
-    <form class="inline-form hidden" id="treatmentForm">
-      <div class="field"><label>Date</label><input type="date" name="date" value="${todayISO()}" required></div>
-      <div class="field grow"><label>Product</label><input type="text" name="product" list="treatmentDatalist" placeholder="e.g. AquaClear activated carbon" required></div>
-      <div class="field"><label>Amount / dose</label><input type="text" name="amount" placeholder="e.g. 5 mL"></div>
-      <div class="field grow"><label>Notes</label><input type="text" name="notes" placeholder="optional"></div>
-      <div class="form-actions"><button type="submit" class="btn btn-primary btn-sm">Log</button></div>
-    </form>
-    <div class="treatment-list" style="margin-top:12px">
-      ${treatments.length ? treatments.map(x => x.id === editingTreatmentId ? `
-        <form class="expense-edit-row" data-edit-treatment="${x.id}">
-          <input type="date" name="date" value="${x.date}" required>
-          <input type="text" name="product" value="${esc(x.product)}" list="treatmentDatalist" required>
-          <input type="text" name="amount" value="${esc(x.amount||'')}" placeholder="amount">
-          <input type="text" name="notes" value="${esc(x.notes||'')}" placeholder="notes">
-          <button type="submit" class="btn btn-primary btn-sm">Save</button>
-          <button type="button" class="btn btn-sm" data-cancel-treatment>Cancel</button>
-        </form>
-      ` : `
-        <div class="treatment-row">
-          <span class="date">${fmtDate(x.date)}</span>
-          <span class="what">${esc(x.product)}${daysBetween(x.date, todayISO())<=7 ? '<span class="recent-pill">recent</span>' : ''}${x.notes?' — '+esc(x.notes):''}</span>
-          <span class="amt">${esc(x.amount||'')}</span>
-          <button class="btn-ghost" data-edit-treatment-btn="${x.id}" title="Edit">✎</button>
-          <button class="btn-ghost" data-del-treatment="${x.id}" title="Delete">✕</button>
-        </div>`).join('') : `<div class="muted-empty">Nothing logged yet.</div>`}
-    </div>
-  `;
-  $('#toggleTreatmentForm').onclick = () => $('#treatmentForm').classList.toggle('hidden');
-  $('#treatmentForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    await dbAdd('treatments', { tankId: activeTankId, date:f.get('date'), product:f.get('product'), amount:f.get('amount')||'', notes:f.get('notes')||'' });
-    render();
-  };
-  $$('[data-del-treatment]', card).forEach(b => b.onclick = async () => { await dbDelete('treatments', b.dataset.delTreatment); render(); });
-  $$('[data-edit-treatment-btn]', card).forEach(b => b.onclick = () => { editingTreatmentId = b.dataset.editTreatmentBtn; render(); });
-  $$('[data-cancel-treatment]', card).forEach(b => b.onclick = () => { editingTreatmentId = null; render(); });
-  $$('[data-edit-treatment]', card).forEach(f => f.onsubmit = async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    await dbUpdate('treatments', f.dataset.editTreatment, { date:fd.get('date'), product:fd.get('product'), amount:fd.get('amount')||'', notes:fd.get('notes')||'' });
-    editingTreatmentId = null;
-    render();
-  });
-}
-
 /* ---- add tank (modal — native prompt()/confirm() don't fire inside the artifact frame) ---- */
-function openTankForm(){
-  $('#tankModalForm').reset();
+let editingTankId = null;
+function openTankForm(editId){
+  const form = $('#tankModalForm');
+  form.reset();
+  editingTankId = editId || null;
+  const t = editingTankId ? state.tanks.find(x => x.id === editingTankId) : null;
+  if(t){
+    $('#tankModalTitle').textContent = 'Edit tank';
+    $('#tankModalSub').textContent = 'Rename it or change its size (say, after an upgrade). All of its past logs stay with it.';
+    $('#tankModalSubmit').textContent = 'Save changes';
+    form.querySelector('[name="name"]').value = t.name;
+    form.querySelector('[name="gallons"]').value = t.gallons;
+    form.querySelector('[name="type"]').value = t.type || '';
+    form.querySelector('[name="isQuarantine"]').checked = !!t.isQuarantine;
+  } else {
+    editingTankId = null;
+    $('#tankModalTitle').textContent = 'New tank';
+    $('#tankModalSub').textContent = 'Add another tank to track separately.';
+    $('#tankModalSubmit').textContent = 'Add tank';
+  }
   $('#tankModalOverlay').classList.remove('hidden');
   $('#tankModalForm').querySelector('[name="name"]').focus();
 }
@@ -1764,8 +1518,14 @@ $('#tankModalForm').onsubmit = async (e) => {
   const gallons = Number(f.get('gallons')) || 0;
   const type = (f.get('type')||'').trim() || 'Freshwater';
   const isQuarantine = f.get('isQuarantine') === 'on';
-  const id = await dbAdd('tanks', { name, gallons, type, startDate: todayISO(), isExample:false, isQuarantine });
-  activeTankId = id;
+  if(editingTankId){
+    // update in place: every log is keyed by tankId, so history is untouched
+    await dbUpdate('tanks', editingTankId, { name, gallons, type, isQuarantine });
+    editingTankId = null;
+  } else {
+    const id = await dbAdd('tanks', { name, gallons, type, startDate: todayISO(), isExample:false, isQuarantine });
+    activeTankId = id;
+  }
   closeTankForm();
   render();
 };
@@ -1820,6 +1580,7 @@ $('#tankModalForm').onsubmit = async (e) => {
   customInput.oninput = () => { sg = Number(customInput.value) || 1.000; compute(); };
 
   $('#converterBtn').onclick = () => {
+    closeMenu();
     labels(); compute();
     $('#converterModalOverlay').classList.remove('hidden');
     fromInput.focus();
@@ -1838,7 +1599,7 @@ $('#tankModalForm').onsubmit = async (e) => {
     if(mode === 'dark' || mode === 'light'){ root.setAttribute('data-theme', mode); }
     else { root.removeAttribute('data-theme'); }
     const isDark = mode === 'dark' || (mode !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if(btn) btn.textContent = isDark ? '☀️' : '🌙';
+    if(btn) btn.textContent = isDark ? 'Light mode' : 'Dark mode';
   }
   apply(saved);
   if(btn) btn.onclick = () => {
